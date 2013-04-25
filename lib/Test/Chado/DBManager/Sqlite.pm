@@ -13,6 +13,7 @@ has '+dsn' => (
     lazy    => 1,
     default => sub {
         my $file = tmpnam();
+        $self->driver('SQLite');
         return "dbi:SQLite:dbname=$file";
     }
 );

@@ -8,6 +8,7 @@ use File::Spec::Functions;
 use IO::File;
 use autodie qw/:file/;
 use DBI;
+use Test::Chado;
 
 requires '_build_dbh',           '_build_database';
 requires 'drop_schema',          'create_database', 'drop_database';
