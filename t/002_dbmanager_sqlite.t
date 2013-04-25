@@ -3,8 +3,8 @@ use Test::More qw/no_plan/;
 use IPC::Cmd qw/can_run/;
 use Test::Exception;
 
-use_ok('Test::Chado::DBManager::SqLite');
-my $sqlite = new_ok('Test::Chado::DBManager::SqLite');
+use_ok('Test::Chado::DBManager::Sqlite');
+my $sqlite = Test::Chado::DBManager::Sqlite->new;
 
 like( $sqlite->dsn, qr/dbi:SQLite:dbname=\S+/, 'should match a Sqlite dsn' );
 like( $sqlite->database, qr/^\S+$/, 'should match the database name' );

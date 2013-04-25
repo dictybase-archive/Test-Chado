@@ -1,4 +1,4 @@
-package Test::Chado::DBManager::SqLite;
+package Test::Chado::DBManager::Sqlite;
 
 use namespace::autoclean;
 use Moo;
