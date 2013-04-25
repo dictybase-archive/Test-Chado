@@ -12,6 +12,7 @@ with 'Test::Chado::Role::HasDBManager';
 has '+dsn' => (
     lazy    => 1,
     default => sub {
+        my $self = shift;
         my $file = tmpnam();
         $self->driver('SQLite');
         return "dbi:SQLite:dbname=$file";
