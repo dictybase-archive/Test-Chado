@@ -53,10 +53,10 @@ sub drop_schema {
     my ($self) = @_;
     my $dbh = $self->dbh;
 
-    my $sth = $dbh->prepare(
+    my $arr = $dbh->selectall_arrayref(
         qq{SELECT name FROM sqlite_master where type = 'table' });
-    $sth->execute();
-    while ( my ($table) = $sth->fetchrow_array() ) {
+    for my $row (@$arr) {
+        my $table = $row->[0];
         $dbh->do(qq{ DROP TABLE $table });
     }
 }
