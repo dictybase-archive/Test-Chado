@@ -7,6 +7,8 @@ my $sqlite = new_ok('Test::Chado::DBManager::Sqlite');
 
 like( $sqlite->dsn, qr/dbi:SQLite:dbname=\S+/, 'should match a Sqlite dsn' );
 like( $sqlite->database, qr/^\S+$/, 'should match the database name' );
+like($sqlite->ddl,qr/chado.sqlite$/, 'should have a sqlite ddl file');
+
 isa_ok( $sqlite->dbh, 'DBI::db' );
 SKIP: {
     my $client = can_run('sqlite3');

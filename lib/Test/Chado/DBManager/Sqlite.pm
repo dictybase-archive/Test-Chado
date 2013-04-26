@@ -40,6 +40,8 @@ sub _build_database {
     }
 }
 
+sub _build_driver { return 'SQLite'}
+
 sub create_database {
     return 1;
 }

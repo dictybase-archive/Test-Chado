@@ -86,7 +86,7 @@ sub deploy_by_dbi {
     my ($self) = @_;
     my $dbh = $self->dbh;
 
-    my $fh = IO::File->new( $self->ddl, 'w' );
+    my $fh = IO::File->new( $self->ddl, 'r' );
     my $data = do { local ($/); <$fh> };
     $fh->close();
 
