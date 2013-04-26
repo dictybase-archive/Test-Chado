@@ -11,10 +11,9 @@ use DBI;
 use Test::Chado::Types qw/DBH/;
 use Test::Chado;
 
-requires '_build_dbh',           '_build_database';
-requires 'drop_schema',          'create_database', 'drop_database';
+requires '_build_dbh',  '_build_database', '_build_driver';
+requires 'drop_schema', 'create_database', 'drop_database';
 requires 'get_client_to_deploy', 'deploy_by_client';
-
 
 has 'dbh' => (
     is      => 'rw',
@@ -41,8 +40,10 @@ has 'database' => (
 );
 
 has 'driver' => (
-    is  => 'rw',
-    isa => 'Str',
+    is      => 'rw',
+    isa     => 'Str',
+    lazy    => 1,
+    builder => '_build_driver'
 );
 
 has 'ddl' => (
@@ -83,11 +84,12 @@ sub deploy_schema {
 
 sub deploy_by_dbi {
     my ($self) = @_;
+    my $dbh = $self->dbh;
+
     my $fh = IO::File->new( $self->ddl, 'w' );
     my $data = do { local ($/); <$fh> };
     $fh->close();
 
-    my $dbh = $self->dbh;
 LINE:
     foreach my $line ( split( /\n{2,}/, $data ) ) {
         next LINE if $line =~ /^\-\-/;

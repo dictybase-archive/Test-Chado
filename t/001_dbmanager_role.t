@@ -6,6 +6,7 @@ sub _build_dbh {
 }
 
 sub _build_database { }
+sub _build_driver   { }
 
 sub drop_schema {
 }
@@ -32,7 +33,7 @@ use Test::More qw/no_plan/;
 
 my $backend = new_ok('TestBackend');
 
-my @required_by_role = qw(_build_database _build_dbh
+my @required_by_role = qw(_build_database _build_dbh _build_driver
     drop_schema get_client_to_deploy deploy_by_client
     create_database drop_database);
 my @consumed_from_role

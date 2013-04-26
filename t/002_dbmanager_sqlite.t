@@ -12,8 +12,10 @@ SKIP: {
     my $client = can_run('sqlite3');
     skip 'sqlite client is not installed', if !$client;
 
-    lives_ok { $sqlite->get_client_to_deploy} 'should have a command line client';
-    lives_ok { $sqlite->deploy_by_client($client) } 'should deploy with command line client';
+    lives_ok { $sqlite->get_client_to_deploy }
+    'should have a command line client';
+    lives_ok { $sqlite->deploy_by_client($client) }
+    'should deploy with command line client';
 
     my @row = $sqlite->dbh->selectrow_array(
         "SELECT name FROM sqlite_master where
@@ -33,3 +35,12 @@ SKIP: {
 }
 
 my $sqlite2 = new_ok('Test::Chado::DBManager::Sqlite');
+lives_ok { $sqlite2->deploy_by_dbi } 'should deploy without client';
+
+my @row2 = $sqlite2->dbh->selectrow_array(
+    "SELECT name FROM sqlite_master where
+	type = ? and tbl_name = ?", {}, qw/table cvterm/
+);
+
+ok( @row2, "should have cvterm table present in the database" );
+lives_ok { $sqlite2->drop_database } 'should disconnect';
