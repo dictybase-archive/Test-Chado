@@ -17,7 +17,7 @@ SKIP: {
 
     my @row = $sqlite->dbh->selectrow_array(
         "SELECT name FROM sqlite_master where
-	type = ? and table_name = ?", {}, qw/table feature/
+	type = ? and tbl_name = ?", {}, qw/table feature/
     );
 
     ok( @row, "should have feature table present in the database" );
@@ -26,7 +26,7 @@ SKIP: {
 
     my @row2 = $sqlite->dbh->selectrow_array(
         "SELECT name FROM sqlite_master where
-	type = ? and table_name = ?", {}, qw/table feature/
+	type = ? and tbl_name = ?", {}, qw/table feature/
     );
 
     isnt( @row2, 1, "should not have feature table in the database" );
