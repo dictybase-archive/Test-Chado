@@ -7,7 +7,6 @@ requires "IPC::Cmd" => "0.58";
 requires "Moo" => "1.001";
 requires "MooX::InsideOut" => "0.001002";
 requires "MooX::late" => "0.009";
-requires "MooseX::Params::Validate" => "0.14";
 requires "Path::Class" => "0.18";
 requires "Test::DBIx::Class" => "0.38";
 requires "Try::Tiny" => "0.03";

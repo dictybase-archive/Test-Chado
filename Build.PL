@@ -32,7 +32,6 @@ my %module_build_args = (
     "Moo" => "1.001",
     "MooX::InsideOut" => "0.001002",
     "MooX::late" => "0.009",
-    "MooseX::Params::Validate" => "0.14",
     "Path::Class" => "0.18",
     "Test::DBIx::Class" => "0.38",
     "Try::Tiny" => "0.03",
