@@ -31,3 +31,5 @@ SKIP: {
 
     isnt( @row2, 1, "should not have feature table in the database" );
 }
+
+my $sqlite2 = new_ok('Test::Chado::DBManager::Sqlite');

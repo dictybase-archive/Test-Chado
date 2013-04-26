@@ -8,15 +8,17 @@ use File::Spec::Functions;
 use IO::File;
 use autodie qw/:file/;
 use DBI;
+use Test::Chado::Types qw/DBH/;
 use Test::Chado;
 
 requires '_build_dbh',           '_build_database';
 requires 'drop_schema',          'create_database', 'drop_database';
 requires 'get_client_to_deploy', 'deploy_by_client';
 
+
 has 'dbh' => (
     is      => 'rw',
-    isa     => 'DBI::db',
+    isa     => DBH,
     lazy    => 1,
     builder => '_build_dbh'
 );

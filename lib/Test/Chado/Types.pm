@@ -6,3 +6,5 @@ use Type::Library
 use Type::Utils;
 
 class_type DBH, { class => "DBI::db"};
+
+1;
