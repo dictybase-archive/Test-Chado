@@ -13,7 +13,7 @@ SKIP: {
     skip 'sqlite client is not installed', if !$client;
 
     lives_ok { $sqlite->get_client_to_deploy} 'should have a command line client';
-    lives_ok { $sqlite->deploy_by_client } 'should deploy with command line client';
+    lives_ok { $sqlite->deploy_by_client($client) } 'should deploy with command line client';
 
     my @row = $sqlite->dbh->selectrow_array(
         "SELECT name FROM sqlite_master where
