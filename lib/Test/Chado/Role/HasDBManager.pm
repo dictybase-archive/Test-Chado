@@ -125,7 +125,7 @@ Database handler, a L<DBI> object. The method <_build_dbh> should be B<implement
 
 =attr driver
 
-Name of the database backend. It is being set from dsn value.
+Name of the database backend. It is being set from dsn value.The method <_build_driver> should be B<implemented> by consuming class.
 
 =attr driver_dsn
 
