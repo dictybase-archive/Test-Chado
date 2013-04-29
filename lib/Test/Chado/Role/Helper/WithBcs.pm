@@ -4,8 +4,8 @@ use Moo::Role;
 use MooX::late;
 use Bio::Chado::Schema;
 use namespace::autoclean;
-use Test::Chado qw( HashRef );
 use Carp;
+use Types::Standard qw/HashRef/;
 
 # Module implementation
 #
@@ -117,7 +117,7 @@ sub find_or_create_db_id {
 sub _build_cvrow {
     my ($self) = @_;
     my $hash;
-    my $namespace = $self->namespace,'-cv';
+    my $namespace = $self->namespace.'-cv';
     my $cvrow = $self->schema->resultset('Cv::Cv')
         ->find_or_create( { name => $namespace } );
     $cvrow->definition(
