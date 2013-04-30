@@ -118,21 +118,21 @@ sub find_or_create_db_id {
 
 sub _build_cvrow {
     my ($self) = @_;
-    my $hash;
+    my %hash=();
     my $namespace = $self->namespace . '-cv';
     my $cvrow     = $self->schema->resultset('Cv::Cv')
         ->find_or_create( { name => $namespace } );
     $cvrow->definition(
         'Ontology namespace for module-build-chado text fixture');
     $cvrow->update;
-    $hash->{default} = $cvrow;
+    $hash{default} = $cvrow;
 
     ## -- now create the cache if any
     my $cv_rs = $self->schema->resultset('Cv::Cv')->search( {} );
     while ( my $row = $cv_rs->next ) {
-        $hash->{ $row->name } = $row;
+        $hash{ $row->name } = $row if not defined $hash{$row->name};
     }
-    return $hash;
+    return hash(%hash);
 }
 
 sub default_cv_id {
