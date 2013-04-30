@@ -5,6 +5,7 @@ requires "File::ShareDir" => "1.02";
 requires "Graph" => "0.94";
 requires "IPC::Cmd" => "0.58";
 requires "Moo" => "1.001";
+requires "MooX::HandlesVia" => "0.001000";
 requires "MooX::InsideOut" => "0.001002";
 requires "MooX::late" => "0.009";
 requires "Path::Class" => "0.18";

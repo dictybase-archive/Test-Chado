@@ -30,6 +30,7 @@ my %module_build_args = (
     "Graph" => "0.94",
     "IPC::Cmd" => "0.58",
     "Moo" => "1.001",
+    "MooX::HandlesVia" => "0.001000",
     "MooX::InsideOut" => "0.001002",
     "MooX::late" => "0.009",
     "Path::Class" => "0.18",
