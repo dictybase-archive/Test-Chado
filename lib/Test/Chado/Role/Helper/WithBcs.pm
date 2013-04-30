@@ -1,11 +1,14 @@
 package Test::Chado::Role::Helper::WithBcs;
+
 # Other modules:
 use Moo::Role;
 use MooX::late;
+use MooX::HandlesVia;
 use Bio::Chado::Schema;
 use namespace::autoclean;
 use Carp;
-use Types::Standard qw/HashRef/;
+use Data::Perl qw/hash/;
+use Test::Chado::Types qw/HashiFied/;
 
 # Module implementation
 #
@@ -13,41 +16,39 @@ use Types::Standard qw/HashRef/;
 requires 'schema', 'namespace';
 
 has 'cvrow' => (
-    is         => 'rw',
-    isa        => HashRef,
-    handles_via => 'Hash',
-    builder => 1,
-    lazy => 1,
-    handles    => {
+    is          => 'rw',
+    isa         => HashiFied,
+    handles_via => 'Data::Perl',
+    builder     => 1,
+    lazy        => 1,
+    handles     => {
         get_cvrow   => 'get',
         set_cvrow   => 'set',
         exist_cvrow => 'defined'
     }
 );
 
-
 has 'dbrow' => (
-    is         => 'rw',
-    isa        => HashRef,
-    handles_via => 'Hash',
-    builder => 1,
-    lazy => 1,
-    handles    => {
+    is          => 'rw',
+    isa         => HashiFied,
+    handles_via => 'Data::Perl',
+    lazy        => 1,
+    builder     => 1,
+    handles     => {
         get_dbrow   => 'get',
         set_dbrow   => 'set',
         exist_dbrow => 'defined'
     }
 );
 
-
 has 'cvterm_row' => (
-    is        => 'rw',
-    isa       => HashRef,
-    handles_via => 'Hash',
-    predicate => 'has_cvterm_row',
-    default   => sub { {} },
-    lazy      => 1,
-    handles   => {
+    is          => 'rw',
+    isa         => HashiFied,
+    handles_via => 'Data::Perl',
+    predicate   => 'has_cvterm_row',
+    default     => sub { {} },
+    lazy        => 1,
+    handles     => {
         get_cvterm_row   => 'get',
         set_cvterm_row   => 'set',
         exist_cvterm_row => 'defined'
@@ -56,20 +57,21 @@ has 'cvterm_row' => (
 
 sub _build_dbrow {
     my ($self) = @_;
-    my $hash   = {};
-    my $name = $self->namespace.'-db';
-    my $row = $self->schema->resultset('General::Db')
+    my %hash   = ();
+    my $name   = $self->namespace . '-db';
+    my $row    = $self->schema->resultset('General::Db')
         ->find_or_create( { name => $name } );
     $row->description('database namespace for test-chado fixture');
     $row->update;
-    $hash->{default} = $row;
+    $hash{default} = $row;
 
     ## -- cache entries from database
     my $rs = $self->schema->resultset('General::Db')->search( {} );
     while ( my $dbrow = $rs->next ) {
-        $hash->{ $dbrow->name } = $dbrow;
+        $hash{ $dbrow->name } = $dbrow
+            if not defined $hash{ $dbrow->name };
     }
-    return $hash;
+    return hash(%hash);
 }
 
 sub default_db_id {
@@ -83,7 +85,7 @@ sub find_db_id {
 }
 
 sub find_or_create_db_id {
-    my ($self,$dbname) = @_;
+    my ( $self, $dbname ) = @_;
     my $schema = $self->schema;
 
     my $dbrow;
@@ -117,8 +119,8 @@ sub find_or_create_db_id {
 sub _build_cvrow {
     my ($self) = @_;
     my $hash;
-    my $namespace = $self->namespace.'-cv';
-    my $cvrow = $self->schema->resultset('Cv::Cv')
+    my $namespace = $self->namespace . '-cv';
+    my $cvrow     = $self->schema->resultset('Cv::Cv')
         ->find_or_create( { name => $namespace } );
     $cvrow->definition(
         'Ontology namespace for module-build-chado text fixture');
@@ -244,7 +246,7 @@ sub find_cvterm_id {
 }
 
 sub search_cvterm_ids_by_namespace {
-    my ($self,$name) = @_;
+    my ( $self, $name ) = @_;
 
     if ( $self->exist_cvrow($name) ) {
         my $ids = [ map { $_->cvterm_id } $self->get_cvrow($name)->cvterms ];
