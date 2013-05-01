@@ -2,11 +2,9 @@ package TestBcsHelper;
 
 use Moo;
 use MooX::late;
-use Test::Chado::Types qw/BCS/;
 use Types::Standard qw/Str/;
 
 has 'namespace' => ( is => 'rw', isa => Str );
-has 'schema'    => ( is => 'rw', isa => BCS );
 with 'Test::Chado::Role::Helper::WithBcs';
 
 1;
@@ -20,11 +18,12 @@ use Test::Chado::DBManager::Sqlite;
 use Test::Chado::Types qw/HashiFied/;
 
 subtest 'class with BCS helper role' => sub {
-    my $schema
-        = Bio::Chado::Schema->connect( "dbi:SQLite:dbname=:memory:", "", "" );
+
+    my $dbmanager = Test::Chado::DBManager::Sqlite->new();
 
     my $helper = new_ok('TestBcsHelper');
-    lives_ok { $helper->schema($schema) } 'should set the schema';
+    lives_ok { $helper->dbmanager($dbmanager) } 'should set the dbmanager';
+    isa_ok( $helper->schema, 'Bio::Chado::Schema' );
     lives_ok { $helper->namespace('test-bcs-helper') }
     'should set the namespace';
     can_ok( $helper, qw(dbrow cvrow cvterm_row) );
@@ -33,11 +32,9 @@ subtest 'class with BCS helper role' => sub {
 subtest 'dbrow attribute in BCS helper role' => sub {
     my $dbmanager = Test::Chado::DBManager::Sqlite->new();
     $dbmanager->deploy_schema;
-    my $schema
-        = Bio::Chado::Schema->connect( sub { return $dbmanager->dbh } );
 
     my $helper = TestBcsHelper->new(
-        schema    => $schema,
+        dbmanager => $dbmanager,
         namespace => 'test-bcs-helper'
     );
     should_pass( $helper->dbrow, HashiFied, 'should return hashref' );
@@ -46,7 +43,7 @@ subtest 'dbrow attribute in BCS helper role' => sub {
     is( $helper->get_dbrow('default')->name,
         'test-bcs-helper-db', 'should match the default db name' );
 
-    my $new_dbrow = $schema->resultset('General::Db')
+    my $new_dbrow = $helper->schema->resultset('General::Db')
         ->find_or_create( { 'name' => 'testtemprow' } );
     lives_ok { $helper->set_dbrow( 'tmp', $new_dbrow ) }
     'should create new dbrow';
@@ -57,11 +54,9 @@ subtest 'dbrow attribute in BCS helper role' => sub {
 subtest 'db table in BCS helper role' => sub {
     my $dbmanager = Test::Chado::DBManager::Sqlite->new();
     $dbmanager->deploy_schema;
-    my $schema
-        = Bio::Chado::Schema->connect( sub { return $dbmanager->dbh } );
 
     my $helper = TestBcsHelper->new(
-        schema    => $schema,
+        dbmanager => $dbmanager,
         namespace => 'test-bcs-helper'
     );
 
@@ -73,7 +68,7 @@ subtest 'db table in BCS helper role' => sub {
         'should find the default db id'
     );
 
-    my $new_dbrow = $schema->resultset('General::Db')
+    my $new_dbrow = $helper->schema->resultset('General::Db')
         ->find_or_create( { 'name' => 'testtemprow' } );
     isnt( $helper->find_db_id( $new_dbrow->name ),
         1, 'should not find the db id' );
@@ -98,13 +93,10 @@ subtest 'db table in BCS helper role' => sub {
 subtest 'cvrow attribute in BCS helper role' => sub {
     my $dbmanager = Test::Chado::DBManager::Sqlite->new();
     $dbmanager->deploy_schema;
-    my $schema
-        = Bio::Chado::Schema->connect( sub { return $dbmanager->dbh } );
-    my $new_cvrow = $schema->resultset('Cv::Cv')
-        ->find_or_create( { 'name' => 'testtemprow' } );
+
     my $helper = TestBcsHelper->new(
-        schema    => $schema,
-        namespace => 'test-bcs-helper'
+        namespace => 'test-bcs-helper',
+        dbmanager => $dbmanager
     );
     should_pass( $helper->cvrow, HashiFied, 'should return hashref' );
     is( $helper->exist_cvrow('default'), 1, 'should have default cvrow' );
@@ -112,6 +104,8 @@ subtest 'cvrow attribute in BCS helper role' => sub {
     is( $helper->get_cvrow('default')->name,
         'test-bcs-helper-cv', 'should match the default db name' );
 
+    my $new_cvrow = $helper->schema->resultset('Cv::Cv')
+        ->find_or_create( { 'name' => 'testtemprow' } );
     lives_ok { $helper->set_cvrow( 'tmp', $new_cvrow ) }
     'should create new cvrow';
     is( $helper->exist_cvrow('tmp'), 1, 'should have the created cvrow' );

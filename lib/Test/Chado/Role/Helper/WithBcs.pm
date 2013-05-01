@@ -8,12 +8,26 @@ use Bio::Chado::Schema;
 use namespace::autoclean;
 use Carp;
 use Data::Perl qw/hash/;
-use Test::Chado::Types qw/HashiFied/;
+use Bio::Chado::Schema;
+use Test::Chado::Types qw/BCS HashiFied DbManager/;
 
 # Module implementation
 #
 
-requires 'schema', 'namespace';
+requires 'namespace';
+
+has 'dbmanager' => ( is => 'rw', isa => DbManager );
+
+has 'schema' => (
+    is      => 'rw',
+    isa     => BCS,
+    lazy    => 1,
+    default => sub {
+        my $self = shift;
+        return Bio::Chado::Schema->connect(
+            sub { return $self->dbmanager->dbh } );
+    }
+);
 
 has 'cvrow' => (
     is          => 'rw',
@@ -114,8 +128,8 @@ sub find_or_create_db_id {
 }
 
 sub _build_cvrow {
-    my ($self) = @_;
-    my %hash=();
+    my ($self)    = @_;
+    my %hash      = ();
     my $namespace = $self->namespace . '-cv';
     my $cvrow     = $self->schema->resultset('Cv::Cv')
         ->find_or_create( { name => $namespace } );
@@ -127,7 +141,7 @@ sub _build_cvrow {
     ## -- now create the cache if any
     my $cv_rs = $self->schema->resultset('Cv::Cv')->search( {} );
     while ( my $row = $cv_rs->next ) {
-        $hash{ $row->name } = $row if not defined $hash{$row->name};
+        $hash{ $row->name } = $row if not defined $hash{ $row->name };
     }
     return hash(%hash);
 }
