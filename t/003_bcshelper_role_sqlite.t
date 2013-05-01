@@ -87,7 +87,6 @@ subtest 'db table in BCS helper role' => sub {
     'should create a new db id';
     is( $helper->exist_dbrow('fresh'), 1,
         'should have cached the new db id' );
-
 };
 
 subtest 'cvrow attribute in BCS helper role' => sub {
@@ -110,4 +109,42 @@ subtest 'cvrow attribute in BCS helper role' => sub {
     'should create new cvrow';
     is( $helper->exist_cvrow('tmp'), 1, 'should have the created cvrow' );
 
+};
+
+subtest 'cv table in BCS helper role' => sub {
+    my $dbmanager = Test::Chado::DBManager::Sqlite->new();
+    $dbmanager->deploy_schema;
+
+    my $helper = TestBcsHelper->new(
+        dbmanager => $dbmanager,
+        namespace => 'test-bcs-helper'
+    );
+
+    should_pass( $helper->cvrow, HashiFied, 'should return hashref' );
+    like( $helper->default_cv_id, qr/^\d+$/,
+        'should return the default cv id' );
+    is( $helper->default_cv_id,
+        $helper->find_cv_id('default'),
+        'should find the default cv id'
+    );
+
+    my $new_cvrow = $helper->schema->resultset('Cv::Cv')
+        ->find_or_create( { 'name' => 'testtemprow' } );
+    isnt( $helper->find_db_id( $new_cvrow->name ),
+        1, 'should not find the cv id' );
+
+    is( $helper->get_cvrow('default')->cv_id,
+        $helper->find_or_create_cv_id('default'),
+        'should find cv id from cache'
+    );
+    is( $new_cvrow->cv_id,
+        $helper->find_or_create_cv_id( $new_cvrow->name ),
+        'should find cv id from database'
+    );
+    is( $helper->exist_cvrow( $new_cvrow->name ),
+        1, 'should have cached the cv id' );
+    lives_ok { $helper->find_or_create_cv_id('fresh') }
+    'should create a new cv id';
+    is( $helper->exist_cvrow('fresh'), 1,
+        'should have cached the new db id' );
 };
