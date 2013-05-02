@@ -178,16 +178,16 @@ subtest 'cvterm in BCS helper role' => sub {
             $new_cvterm_row->cvterm_id,
             'should get cvterm from cache'
         );
-        is( $helper->find_cvterm_id( 'tempcvterm', 'default' ),
+        is( $helper->find_cvterm_id( 'tempcvterm', 'testchado' ),
             $new_cvterm_row->cvterm_id,
             'should get cvterm from cache with cv namespace'
         );
 
-        is( $helper->find_cvterm_id( 'tempcvterm2', 'default' ),
+        is( $helper->find_cvterm_id( 'tempcvterm2', 'testchado' ),
             $new_cvterm_row2->cvterm_id,
             'should get cvterm from database with cv namespace'
         );
-        is( $helper->find_cvterm_id( 'tempcvterm2', 'default' ),
+        is( $helper->find_cvterm_id( 'tempcvterm2', 'testchado' ),
             $new_cvterm_row2->cvterm_id,
             'should get cvterm from cache with cv namespace'
         );
@@ -198,7 +198,7 @@ subtest 'cvterm in BCS helper role' => sub {
             = [ sort { $a <=> $b }
                 ( $new_cvterm_row->cvterm_id, $new_cvterm_row2->cvterm_id ) ];
         my $ids_from_cache
-            = $helper->search_cvterm_ids_by_namespace('default');
+            = $helper->search_cvterm_ids_by_namespace('testchado');
 
         is_deeply(
             $ids,
@@ -207,12 +207,29 @@ subtest 'cvterm in BCS helper role' => sub {
         );
 
         my $ids_from_cache2
-            = $helper->search_cvterm_ids_by_namespace('default');
+            = $helper->search_cvterm_ids_by_namespace('testchado');
         is_deeply(
             $ids,
             [ sort { $a <=> $b } @$ids_from_cache2 ],
             'should get cvterms from cache for a cv namespace'
         );
+    };
+
+    subtest 'manage through find_or_create_cvterm_id method' => sub {
+        my $new_cvterm_row3 = create_cvterm_row($helper,'tempcvterm3');
+        is( $helper->find_or_create_cvterm_id( 'tempcvterm3', 'testchado' ),
+            $new_cvterm_row3->cvterm_id,
+            'should retrieve cvterm from database'
+        );
+
+        lives_ok {
+            $helper->find_or_create_cvterm_id( 'tempcvterm4', 'testchado',
+                'testchado', 'tempcvterm4' );
+        }
+        'should create new cvterm';
+
+        is( $helper->exist_cvterm_row('tempcvterm4'),
+            1, 'should cached the new cvterm' );
     };
 
 };
@@ -222,11 +239,11 @@ sub create_cvterm_row {
     my $new_cvterm_row = $helper->schema->resultset('Cv::Cvterm')->create(
         {   name  => $cvterm,
             cv_id => $helper->schema->resultset('Cv::Cv')
-                ->find_or_create( { name => 'default' } )->cv_id,
+                ->find_or_create( { name => 'testchado' } )->cv_id,
             dbxref => {
                 accession => $cvterm,
                 db_id     => $helper->schema->resultset('General::Db')
-                    ->find_or_create( { name => 'default' } )->db_id
+                    ->find_or_create( { name => 'testchado' } )->db_id
             }
         }
     );
