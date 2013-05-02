@@ -1,4 +1,4 @@
-package Test::Chado::Role::Helper::WithBcs;
+ackage Test::Chado::Role::Helper::WithBcs;
 
 # Other modules:
 use Moo::Role;
@@ -34,6 +34,7 @@ has 'cvrow' => (
     isa         => HashiFied,
     handles_via => 'Data::Perl',
     builder     => 1,
+    clearer     => 1,
     lazy        => 1,
     handles     => {
         get_cvrow   => 'get',
@@ -47,6 +48,7 @@ has 'dbrow' => (
     isa         => HashiFied,
     handles_via => 'Data::Perl',
     lazy        => 1,
+    clearer     => 1,
     builder     => 1,
     handles     => {
         get_dbrow   => 'get',
