@@ -1,4 +1,4 @@
-ackage Test::Chado::Role::Helper::WithBcs;
+package Test::Chado::Role::Helper::WithBcs;
 
 # Other modules:
 use Moo::Role;
