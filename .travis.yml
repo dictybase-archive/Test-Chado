@@ -5,13 +5,14 @@ perl:
  - "5.14"
  - "5.16"
 script:
- - dzil smoke --release --author
+   - perl Build.PL && ./Build && cover -test
 install: 
  - "sudo apt-get update"
  - "sudo apt-get install libdb-dev"
- - "cpanm -n Dist::Zilla"
- - "dzil authordeps | cpanm -n"
- - "dzil listdeps | cpanm -n"
+ - "cpanm -n --quiet --installdeps ."
+ - "cpanm --quiet -n Devel::Cover::Report::Coveralls"
 branches:
    only:
      - "feature/fixture-loader"
+after_success:
+   cover -report coveralls
