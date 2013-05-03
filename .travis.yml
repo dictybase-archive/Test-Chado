@@ -1,0 +1,15 @@
+language: perl
+perl:
+ - "5.10"
+ - "5.12"
+ - "5.14"
+ - "5.16"
+script:
+ - dzil smoke --release --author
+install: 
+ - "cpanm -n Dist::Zilla"
+ - "dzil authordeps | cpanm -n"
+ - "dzil listdeps | cpanm -n"
+branches:
+   only:
+     - "feature/fixture-loader"
