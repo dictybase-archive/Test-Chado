@@ -152,7 +152,6 @@ sub load_ontology {
     $loader->parsefile( $self->obo_xml );
     $loader->purge;
     $self->store_relationship;
-
 }
 
 sub load_fixtures {
@@ -225,8 +224,22 @@ sub name2id {
             ->search( { accession => { -like => '%' . $name } },
             { rows => 1 } )->single;
         if ( !$row ) {
-            $self->alert("serious problem: **$name** nowhere to be found");
-            return;
+            my $namespace = $self->ontology_namespace;
+            $row = $self->schema->txn_do(
+                sub {
+                    return $self->schema->resultset('Cv::Cvterm')->create(
+                        {   cv_id => $self->find_or_create_cv_id($namespace),
+                            name  => $name,
+                            dbxref => {
+                                db_id =>
+                                    $self->find_or_create_db_id($namespace),
+                                accession => $name,
+                            }
+                        }
+                    );
+                }
+            );
+            return $row->cvterm_id;
         }
         return $row->cvterm->cvterm_id;
     }
@@ -256,6 +269,7 @@ sub load_typedef {
     my $name        = $node->first_child_text('name');
     my $id          = $node->first_child_text('id');
     my $is_obsolete = $node->first_child_text('is_obsolete');
+
     my $namespace
         = $node->has_child('namespace')
         ? $node->first_child_text('namespace')
@@ -298,6 +312,7 @@ sub load_term {
     my $name        = $node->first_child_text('name');
     my $id          = $node->first_child_text('id');
     my $is_obsolete = $node->first_child_text('is_obsolete');
+
     my $namespace
         = $node->has_child('namespace')
         ? $node->first_child_text('namespace')

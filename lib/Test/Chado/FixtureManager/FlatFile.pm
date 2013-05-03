@@ -39,7 +39,7 @@ has 'rel_fixture' => (
     lazy    => 1,
     default => sub {
         my $self = shift;
-        return catfile( $self->default_fixture_path, 'relationship_obo.xml' );
+        return catfile( $self->default_fixture_path, 'relationship.obo_xml' );
     }
 );
 
@@ -49,7 +49,7 @@ has 'so_fixture' => (
     lazy    => 1,
     default => sub {
         my $self = shift;
-        return catfile( $self->default_fixture_path, 'sequence_obo.xml' );
+        return catfile( $self->default_fixture_path, 'sofa.obo_xml' );
     }
 );
 1;
