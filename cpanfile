@@ -10,6 +10,7 @@ requires "MooX::InsideOut" => "0.001002";
 requires "MooX::late" => "0.009";
 requires "Path::Class" => "0.18";
 requires "Test::DBIx::Class" => "0.38";
+requires "Test::DatabaseRow" => "2.03";
 requires "Try::Tiny" => "0.03";
 requires "XML::Twig" => "3.35";
 requires "XML::XPath" => "1.13";
