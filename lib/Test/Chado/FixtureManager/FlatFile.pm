@@ -5,6 +5,7 @@ use MooX::late;
 use Types::Standard qw/Str/;
 use Carp;
 use File::Spec::Functions;
+use Test::Chado;
 
 has 'default_fixture_path' => (
     is      => 'ro',
