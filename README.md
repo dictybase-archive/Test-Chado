@@ -187,6 +187,16 @@ Returns a hash with the following connection specific keys ...
 Returns an 4 elements array with connection arguments identical to [DBI](http://search.cpan.org/perldoc?DBI)'s __connect__
 method.
 
+# Build Status
+
+<a href='https://travis-ci.org/dictyBase/Test-Chado'>
+  <img src='https://travis-ci.org/dictyBase/Test-Chado.png?branch=develop'
+  alt='Travis CI status'/></a>
+
+<a href='https://coveralls.io/r/dictyBase/Test-Chado'><img
+src='https://coveralls.io/repos/dictyBase/Test-Chado/badge.png?branch=develop'
+alt='Coverage Status' /></a>
+
 # API
 
 # AUTHOR

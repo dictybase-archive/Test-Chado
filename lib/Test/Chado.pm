@@ -6,6 +6,21 @@ package Test::Chado;
 
 # ABSTRACT: Build,configure and test chado database backed modules and applications
 
+=head1 Build Status
+
+=begin HTML
+
+<a href='https://travis-ci.org/dictyBase/Test-Chado'>
+  <img src='https://travis-ci.org/dictyBase/Test-Chado.png?branch=develop'
+  alt='Travis CI status'/></a>
+
+<a href='https://coveralls.io/r/dictyBase/Test-Chado'><img
+src='https://coveralls.io/repos/dictyBase/Test-Chado/badge.png?branch=develop'
+alt='Coverage Status' /></a>
+
+
+=end HTML
+
 =head1 SYNOPSIS
 
 =head3 Write build script(Build.PL) for your module or web application:

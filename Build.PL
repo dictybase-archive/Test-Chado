@@ -34,7 +34,6 @@ my %module_build_args = (
     "MooX::InsideOut" => "0.001002",
     "MooX::late" => "0.009",
     "Path::Class" => "0.18",
-    "Test::DBIx::Class" => "0.38",
     "Test::DatabaseRow" => "2.03",
     "Try::Tiny" => "0.03",
     "XML::Twig" => "3.35",
