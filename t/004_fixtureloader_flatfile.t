@@ -23,8 +23,8 @@ subtest 'attributes in flatfile fixtureloader' => sub {
             catfile( module_dir('Test::Chado'), 'sofa.obo_xml' ) );
     }
     'should set obo_xml attribute';
-    is( $loader->ontology_namespace,
-        'sequence', 'should have parsed ontology namespace' );
+    is( $loader->ontology_namespace, 'sequence',
+        'should have parsed ontology namespace' );
 };
 
 subtest 'loading organism fixture from flatfile' => sub {
@@ -34,7 +34,7 @@ subtest 'loading organism fixture from flatfile' => sub {
         dbmanager => $dbmanager );
     local $Test::DatabaseRow::dbh = $dbmanager->dbh;
 
-    lives_ok { $loader->load_organism }, 'should load organism fixture';
+    lives_ok { $loader->load_organism } 'should load organism fixture';
     row_ok(
         sql         => "SELECT * FROM organism",
         results     => 12,
@@ -72,7 +72,7 @@ SQL
     row_ok(
         results     => 26,
         description => 'should have 26 relation ontology terms',
-        sql => $sql
+        sql         => $sql
     );
 
     $sql = <<'SQL';
@@ -80,7 +80,7 @@ SQL
     WHERE CV.NAME = 'relationship' AND CVTERM.NAME = 'located_in'
 SQL
     row_ok(
-        sql => $sql,
+        sql         => $sql,
         results     => 1,
         description => 'should have term located_in'
     );
@@ -90,7 +90,7 @@ SQL
     WHERE CV.NAME = 'relationship' AND CVTERM.NAME IN('adjacent_to','contained_in')
 SQL
     row_ok(
-        sql => $sql,
+        sql         => $sql,
         results     => 2,
         description => 'should have term adjacent_to and contained_in'
     );
@@ -112,8 +112,8 @@ SQL
 
     row_ok(
         results     => 287,
-        description => 'should have 286 sequence ontology terms',
-        sql => $sql
+        description => 'should have 287 sequence ontology terms',
+        sql         => $sql
     );
 
     $sql = <<'SQL';
@@ -121,7 +121,7 @@ SQL
     WHERE CV.NAME = 'sequence' AND CVTERM.NAME = 'contig'
 SQL
     row_ok(
-        sql => $sql,
+        sql         => $sql,
         results     => 1,
         description => 'should have term contig'
     );
@@ -131,8 +131,71 @@ SQL
     WHERE CV.NAME = 'sequence' AND CVTERM.NAME IN('chromosome','gene', 'polypeptide')
 SQL
     row_ok(
-        sql => $sql,
+        sql         => $sql,
         results     => 3,
         description => 'should have these three SO terms'
+    );
+};
+
+subtest 'loading all fixtures from flatfile' => sub {
+    my $dbmanager = Test::Chado::DBManager::Sqlite->new();
+    $dbmanager->deploy_schema;
+    my $loader = Test::Chado::FixtureLoader::FlatFile->new(
+        dbmanager => $dbmanager );
+    local $Test::DatabaseRow::dbh = $dbmanager->dbh;
+
+    lives_ok { $loader->load_fixtures } 'should load all fixtures';
+
+    row_ok(
+        sql         => "SELECT * FROM organism",
+        results     => 12,
+        description => 'should have 12 organisms'
+    );
+
+    my $sql = <<'SQL';
+    SELECT CVTERM.* from CVTERM join CV on CV.CV_ID=CVTERM.CV_ID 
+    WHERE CV.NAME = 'sequence';
+SQL
+
+    row_ok(
+        results     => 286,
+        description => 'should have 286 sequence ontology terms',
+        sql         => $sql
+    );
+
+    $sql = <<'SQL';
+    SELECT CVTERM.* from CVTERM join CV on CV.CV_ID=CVTERM.CV_ID 
+    WHERE CV.NAME = 'relationship';
+SQL
+    row_ok(
+        results     => 26,
+        description => 'should have 26 relation ontology terms',
+        sql         => $sql
+    );
+};
+
+subtest 'loading arbitary ontology fixture from flatfile' => sub {
+    my $dbmanager = Test::Chado::DBManager::Sqlite->new();
+    $dbmanager->deploy_schema;
+    my $loader = Test::Chado::FixtureLoader::FlatFile->new(
+        dbmanager => $dbmanager );
+    local $Test::DatabaseRow::dbh = $dbmanager->dbh;
+
+    lives_ok {
+        $loader->obo_xml(
+            catfile( module_dir('Test::Chado'), 'evidence_code.obo_xml' ) );
+    }
+    'should set the obo xml file for loading';
+
+    lives_ok { $loader->load_ontology } 'should load the ontology';
+
+    $sql = <<'SQL';
+    SELECT CVTERM.* from CVTERM JOIN CV on CV.CV_ID=CVTERM.CV_ID
+    WHERE CV.NAME LIKE 'evidence%' AND CVTERM.NAME = 'curator inference'
+SQL
+    row_ok(
+        sql         => $sql,
+        results     => 1,
+        description => 'should have term curator inference'
     );
 };
