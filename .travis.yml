@@ -13,6 +13,6 @@ install:
  - "cpanm --quiet -n Devel::Cover::Report::Coveralls"
 branches:
    only:
-     - "feature/fixture-loader"
+     - "develop"
 after_success:
    cover -report coveralls
