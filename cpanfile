@@ -7,6 +7,7 @@ requires "IPC::Cmd" => "0.58";
 requires "Module::Path" => "0.09";
 requires "Module::Runtime" => "0.013";
 requires "Moo" => "1.001";
+requires "MooX::ClassAttribute" => "0.006";
 requires "MooX::HandlesVia" => "0.001000";
 requires "MooX::InsideOut" => "0.001002";
 requires "MooX::late" => "0.009";

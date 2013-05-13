@@ -32,6 +32,7 @@ my %module_build_args = (
     "Module::Path" => "0.09",
     "Module::Runtime" => "0.013",
     "Moo" => "1.001",
+    "MooX::ClassAttribute" => "0.006",
     "MooX::HandlesVia" => "0.001000",
     "MooX::InsideOut" => "0.001002",
     "MooX::late" => "0.009",
