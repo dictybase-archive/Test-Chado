@@ -1,6 +1,37 @@
 use strict;
 use warnings;
+
 package Test::Chado;
+use Test::Chado::Factory::DBManager;
+use Test::Chado::Types qw/BCS DbManager/;
+use Moo;
+use MooX::ClassAttribute;
+use Getopt::Long;
+use Sub::Exporter::Util qw/curry_method/;
+use Sub::Exporter -setup => {
+    exports => {
+        'chado_schema'  => curry_method,
+        'drop_schema'   => curry_method,
+        'reload_schema' => curry_method
+    },
+    groups => {
+        'default' => [qw/chado_schema reload_schema/],
+        'schema'  => [qw/chado_schema drop_schema reload_schema/]
+    }
+};
+
+my $opt = {};
+GetOptions( $opt, 'dsn:s', 'user:s', 'password:s'  );
+
+class_has '_dbmanager' => (is => 'rw', isa => DbManager);
+
+sub chado_schema {
+    my ($class, %arg) = @_;
+    if (my $dbmanager = $class->_dbmanager) {
+
+    }
+}
+
 
 1;
 
