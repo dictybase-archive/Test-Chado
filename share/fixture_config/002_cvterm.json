@@ -1,34 +1,31 @@
 {
-  "belongs_to": { "fetch": 0}, 
+  "belongs_to": { "fetch": 0},
 	"sets": [
 		{
-			"class": "Cv::Cvterm", 
-			"quantity": "all", 
-			"join" : ["cv"], 
-			"cond": 
+			"class": "Cv::Cvterm",
+			"quantity": "all",
+			"join" : ["cv"],
+			"cond":
 			    {
-			      "cv.name": 
+			      "cv.name":
 			          [
-			            "sequence",  
-			            "relationship", 
-			            "cvterm_property_type", 
-			            "chado_properties", 
-			            "genome_properties", 
-			            "annotation_properties", 
+			            "sequence",
+			            "relationship",
+			            "chado_properties",
 			            "feature_property"
 			          ]
-			    }, 
-			"fetch": [ 
+			    },
+			"fetch": [
 			  {
-					"rel": "dbxref", 
-					"quantity": "all" 
-				}, 
+					"rel": "dbxref",
+					"quantity": "all"
+				},
 				{
-					"rel": "cvterm_dbxrefs", 
-					"quantity": "all", 
+					"rel": "cvterm_dbxrefs",
+					"quantity": "all",
 					"fetch": [
 					  {
-					  	"rel": "dbxref", 
+					  	"rel": "dbxref",
 					  	"quantity": "all"
 					  }
 					]

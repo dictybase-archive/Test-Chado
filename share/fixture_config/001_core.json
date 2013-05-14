@@ -1,29 +1,27 @@
 {
-  "belongs_to": { "fetch": 0}, 
+  "belongs_to": { "fetch": 0},
 	"sets": [
 		{
-			"class": "Cv::Cv", 
-			"quantity": "all", 
-			"cond": 
+			"class": "Cv::Cv",
+			"quantity": "all",
+			"cond":
 			    {
-			      "name": 
+			      "name":
 			          [
-			            "sequence",  
-			            "relationship", 
-			            "cvterm_property_type", 
-			            "chado_properties", 
-			            "genome_properties", 
-			            "annotation_properties", 
+			            "sequence",
+			            "relationship",
+			            "cvterm_property_type",
+			            "chado_properties",
 			            "feature_property"
 			        ]
-			 } 
-		}, 
+			 }
+		},
 		{
-			 "class": "General::Db", 
+			 "class": "General::Db",
 			 "quantity": "all"
-		}, 
+		},
 		{
-			 "class": "Organism::Organism", 
+			 "class": "Organism::Organism",
 			 "quantity": "all"
 		}
 	]
