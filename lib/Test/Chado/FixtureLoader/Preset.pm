@@ -4,7 +4,17 @@ use Test::Chado;
 use File::ShareDir qw/module_dir module_file/;
 use DBIx::Class::Fixtures;
 use Archive::Tar;
+use Types::Standard qw/Str/;
 use File::Temp;
+use File::Spec::Functions;
+
+has 'namespace' => (
+    is      => 'rw',
+    isa     => Str,
+    lazy    => 1,
+    default => 'test-chado'
+);
+
 
 sub load_fixtures {
     my ($self) = @_;
@@ -20,14 +30,14 @@ sub load_fixtures {
                 catdir( module_dir('Test::Chado'), 'fixture_config' )
         }
     );
-    for my $config_file ( sort { $a <=> $b } $fixture->available_config_sets )
+    for my $config_file ( sort  $fixture->available_config_sets )
     {
         my $fixture_dir = catdir( $staging_temp, 'fixtures',
             ( ( split /\./, $config_file ) )[0] );
         $fixture->populate(
             {   directory => $fixture_dir,
                 no_deploy => 1,
-                schema    => $self->schema
+                schema    => $self->dynamic_schema
             }
         );
     }

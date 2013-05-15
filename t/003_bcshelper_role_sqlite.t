@@ -24,6 +24,7 @@ subtest 'class with BCS helper role' => sub {
     my $helper = new_ok('TestBcsHelper');
     lives_ok { $helper->dbmanager($dbmanager) } 'should set the dbmanager';
     isa_ok( $helper->schema, 'Bio::Chado::Schema' );
+    isa_ok($helper->dynamic_schema,'DBIx::Class::Schema');
     lives_ok { $helper->namespace('test-bcs-helper') }
     'should set the namespace';
     can_ok( $helper, qw(dbrow cvrow cvterm_row) );

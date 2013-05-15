@@ -3,10 +3,11 @@ package Test::Chado::Types;
 use Type::Library
     -base,
     -declare =>
-    qw(DBH DbManager BCS Twig Graph GraphT HashiFied FixtureManager);
+    qw(DBH DbManager BCS Twig Graph GraphT HashiFied FixtureManager DBIC);
 use Type::Utils;
 
 class_type DBH,    { class => "DBI::db" };
+class_type DBIC,   { class => "DBIx::Class::Schema" };
 class_type Twig,   { class => "XML::Twig" };
 class_type Graph,  { class => "Graph" };
 class_type GraphT, { class => "Graph::Traversal" };

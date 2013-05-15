@@ -7,6 +7,8 @@ use DBI;
 use File::Temp qw/:POSIX/;
 use IPC::Cmd qw/can_run run/;
 
+
+has 'is_dynamic_schema' => (is => 'ro', isa => 'Bool', default => 1);
 with 'Test::Chado::Role::HasDBManager';
 
 has '+dsn' => (
@@ -85,5 +87,6 @@ sub deploy_by_client {
     return $success if $success;
     die "unable to run command : ", $error_code, " ", $stderr_buf;
 }
+
 
 1;

@@ -9,7 +9,8 @@ use namespace::autoclean;
 use Carp;
 use Data::Perl qw/hash/;
 use Bio::Chado::Schema;
-use Test::Chado::Types qw/BCS HashiFied DbManager/;
+use Test::Chado::Types qw/BCS HashiFied DbManager DBIC/;
+use Module::Load qw/load/;
 
 # Module implementation
 #
@@ -17,6 +18,23 @@ use Test::Chado::Types qw/BCS HashiFied DbManager/;
 requires 'namespace';
 
 has 'dbmanager' => ( is => 'rw', isa => DbManager );
+
+has 'dynamic_schema' => (
+    is      => 'ro',
+    isa     => DBIC,
+    lazy    => 1,
+    default => sub {
+        my $self = shift;
+        if ( $self->dbmanager->can('is_dynamic_schema') and $self->dbmanager->is_dynamic_schema ) {
+            load 'Test::Chado::Schema::Loader';
+            return Test::Chado::Schema::Loader->connect(
+                sub { return $self->dbmanager->dbh } );
+        }
+        else {
+            return $self->schema;
+        }
+    }
+);
 
 has 'schema' => (
     is      => 'rw',
