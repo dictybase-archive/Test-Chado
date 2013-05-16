@@ -1,9 +1,9 @@
 use Test::More qw/no_plan/;
 use Test::Chado;
 
-use_ok 'Test::Chado::FixtureManager::FlatFile';
+use_ok 'Test::Chado::FixtureManager::Flatfile';
 subtest 'default path for default fixtures' => sub {
-    my $manager = new_ok 'Test::Chado::FixtureManager::FlatFile';
+    my $manager = new_ok 'Test::Chado::FixtureManager::Flatfile';
     is( $manager->default_fixture_path, $manager->fixture_path,
         'should have default fixture
 	 		path'

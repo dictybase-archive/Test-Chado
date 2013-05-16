@@ -1,4 +1,4 @@
-package Test::Chado::FixtureManager::FlatFile;
+package Test::Chado::FixtureManager::Flatfile;
 use File::ShareDir qw/module_dir/;
 use Moo;
 use MooX::late;

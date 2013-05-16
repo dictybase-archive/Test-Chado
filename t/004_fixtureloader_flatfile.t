@@ -5,15 +5,15 @@ use File::ShareDir qw/module_dir/;
 use File::Spec::Functions;
 use Test::DatabaseRow;
 
-use_ok('Test::Chado::FixtureLoader::FlatFile');
+use_ok('Test::Chado::FixtureLoader::Flatfile');
 subtest 'attributes in flatfile fixtureloader' => sub {
     my $dbmanager = Test::Chado::DBManager::Sqlite->new();
 
-    my $loader = new_ok('Test::Chado::FixtureLoader::FlatFile');
+    my $loader = new_ok('Test::Chado::FixtureLoader::Flatfile');
     lives_ok { $loader->dbmanager($dbmanager) } 'should set the dbmanager';
     is( $loader->namespace, 'test-chado', 'should have a default namespace' );
     isa_ok( $loader->fixture_manager,
-        'Test::Chado::FixtureManager::FlatFile' );
+        'Test::Chado::FixtureManager::Flatfile' );
     isa_ok( $loader->obo_xml_loader, 'XML::Twig' );
     isa_ok( $loader->graph,          'Graph' );
     isa_ok( $loader->traverse_graph, 'Graph::Traversal::BFS' );
@@ -30,7 +30,7 @@ subtest 'attributes in flatfile fixtureloader' => sub {
 subtest 'loading organism fixture from flatfile' => sub {
     my $dbmanager = Test::Chado::DBManager::Sqlite->new();
     $dbmanager->deploy_schema;
-    my $loader = Test::Chado::FixtureLoader::FlatFile->new(
+    my $loader = Test::Chado::FixtureLoader::Flatfile->new(
         dbmanager => $dbmanager );
     local $Test::DatabaseRow::dbh = $dbmanager->dbh;
 
@@ -59,7 +59,7 @@ subtest 'loading organism fixture from flatfile' => sub {
 subtest 'loading relation ontology fixture from flatfile' => sub {
     my $dbmanager = Test::Chado::DBManager::Sqlite->new();
     $dbmanager->deploy_schema;
-    my $loader = Test::Chado::FixtureLoader::FlatFile->new(
+    my $loader = Test::Chado::FixtureLoader::Flatfile->new(
         dbmanager => $dbmanager );
     local $Test::DatabaseRow::dbh = $dbmanager->dbh;
 
@@ -99,7 +99,7 @@ SQL
 subtest 'loading sequence ontology fixture from flatfile' => sub {
     my $dbmanager = Test::Chado::DBManager::Sqlite->new();
     $dbmanager->deploy_schema;
-    my $loader = Test::Chado::FixtureLoader::FlatFile->new(
+    my $loader = Test::Chado::FixtureLoader::Flatfile->new(
         dbmanager => $dbmanager );
     local $Test::DatabaseRow::dbh = $dbmanager->dbh;
 
@@ -140,7 +140,7 @@ SQL
 subtest 'loading all fixtures from flatfile' => sub {
     my $dbmanager = Test::Chado::DBManager::Sqlite->new();
     $dbmanager->deploy_schema;
-    my $loader = Test::Chado::FixtureLoader::FlatFile->new(
+    my $loader = Test::Chado::FixtureLoader::Flatfile->new(
         dbmanager => $dbmanager );
     local $Test::DatabaseRow::dbh = $dbmanager->dbh;
 
@@ -177,7 +177,7 @@ SQL
 subtest 'loading arbitary ontology fixture from flatfile' => sub {
     my $dbmanager = Test::Chado::DBManager::Sqlite->new();
     $dbmanager->deploy_schema;
-    my $loader = Test::Chado::FixtureLoader::FlatFile->new(
+    my $loader = Test::Chado::FixtureLoader::Flatfile->new(
         dbmanager => $dbmanager );
     local $Test::DatabaseRow::dbh = $dbmanager->dbh;
 
