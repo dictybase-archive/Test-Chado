@@ -14,6 +14,7 @@ use Test::Chado;
 requires '_build_dbh',  '_build_database', '_build_driver';
 requires 'drop_schema', 'create_database', 'drop_database';
 requires 'get_client_to_deploy', 'deploy_by_client';
+requires 'is_dynamic_schema';
 
 has 'dbh' => (
     is      => 'rw',
@@ -136,6 +137,10 @@ Location of the database specific ddl file. Should be B<implemented> by consumin
 =attr dbi_attributes
 
 Extra parameters for database connection, by default RaiseError and AutoCommit are set.
+
+=attr is_dynamic_schema
+
+Indicates whether B<DBIx::Class::Schema> should be dynamic or comes from L<Bio::Chado::Schema>. Should be B<implemented> by consuming class.
 
 =method deploy_schema
 

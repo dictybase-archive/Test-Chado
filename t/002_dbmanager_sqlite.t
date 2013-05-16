@@ -12,6 +12,7 @@ subtest 'Using sqlite backend with command line client' => sub {
     like( $sqlite->ddl, qr/chado.sqlite$/, 'should have a sqlite ddl file' );
 
     isa_ok( $sqlite->dbh, 'DBI::db' );
+    is($sqlite->is_dynamic_schema,1,'should generate dynamic schema');
 SKIP: {
         my $client = can_run('sqlite3');
         skip 'sqlite client is not installed', if !$client;

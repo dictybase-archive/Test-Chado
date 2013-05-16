@@ -1,6 +1,10 @@
 package TestBackend;
 use Moo;
+use MooX::late;
+use Types::Standard qw/Bool/;
 use DBI;
+
+has 'is_dynamic_schema' => (is => 'rw', isa => Bool);
 
 sub _build_dbh {
 }
@@ -35,7 +39,7 @@ my $backend = new_ok('TestBackend');
 
 my @required_by_role = qw(_build_database _build_dbh _build_driver
     drop_schema get_client_to_deploy deploy_by_client
-    create_database drop_database);
+    create_database drop_database is_dynamic_schema);
 my @consumed_from_role
     = qw(reset_schema driver_dsn dbh dbi_attributes database driver ddl user password dsn deploy_schema deploy_by_dbi);
 can_ok( $backend, @required_by_role );
