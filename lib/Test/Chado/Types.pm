@@ -16,6 +16,6 @@ class_type FixtureManager,
     { class => "Test::Chado::FixtureManager::Flatfile" };
 class_type HashiFied,    { class => "Data::Perl::Collection::Hash" };
 role_type DbManager,     { role  => 'Test::Chado::Role::HasDBManager' };
-role_type FixtureLoader, { role  => 'Test::Chado::Role::Helper::WithBcs' }
+role_type FixtureLoader, { role  => 'Test::Chado::Role::Helper::WithBcs' };
 
-    1;
+1;

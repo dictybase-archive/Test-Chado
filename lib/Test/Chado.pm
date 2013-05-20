@@ -1,19 +1,19 @@
 package Test::Chado;
 use Test::Chado::Factory::DBManager;
 use Test::Chado::Factory::FixtureLoader;
-use Test::Chado::Types qw/FixtureLoader/;
+use Test::Chado::Types qw/FixtureLoader DbManager/;
+use Types::Standard qw/Str/;
 use Moo;
 use DBI;
 use MooX::ClassAttribute;
-use MooX::late;
 use Getopt::Long;
 use Sub::Exporter::Util qw/curry_method/;
 use Sub::Exporter -setup => {
     exports => {
-        'chado_schema'       => curry_method,
-        'drop_schema'        => curry_method,
-        'reload_schema'      => curry_method,
-        'set_fixture_loader' => curry_method
+        'chado_schema'       => \&_build_schema,
+        'drop_schema'        => \&_drop_schema,
+        'reload_schema'      => \&_reload_schema,
+        'set_fixture_loader' => \&_set_fixture_loader
     },
     groups => {
         'default' => [qw/chado_schema reload_schema set_fixture_loader/],
@@ -21,47 +21,59 @@ use Sub::Exporter -setup => {
     }
 };
 
-my $opt = {};
-GetOptions( $opt, 'dsn:s', 'user:s', 'password:s' );
+my %opt = ();
+GetOptions( \%opt, 'dsn:s', 'user:s', 'password:s' );
 
-class_has '_fixture_loader_instance' => (
+class_has 'dbmanager_instance' => ( is => 'rw', isa => DbManager );
+
+class_has 'fixture_loader_instance' => (
     is  => 'rw',
     isa => FixtureLoader,
 );
 
-class_has '_fixture_loader' =>
+class_has 'fixture_loader' =>
     ( is => 'rw', isa => Str, default => 'preset', lazy => 1 );
 
-sub set_fixture_loader {
-    my ( $class, $arg ) = @_;
-    if ($arg) {
-        $class->_fixture_loader($arg);
-    }
+sub _set_fixture_loader {
+    my ($class) = @_;
+    return sub {
+        my ($arg) = @_;
+        if ($arg) {
+            $class->fixture_loader($arg);
+        }
+    };
 }
 
-sub reload_schema {
-    my $class          = shift;
-    my $fixture_loader = $class->get_fixture_loader;
-    $fixture_loader->dbmanager->reset_schema;
+sub _reload_schema {
+    my ($class) = @_;
+    return sub {
+        my $fixture_loader = $class->get_fixture_loader;
+        $fixture_loader->dbmanager->reset_schema;
+    };
 }
 
-sub drop_schema {
-    my $class          = shift;
-    my $fixture_loader = $class->get_fixture_loader;
-    $fixture_loader->dbmanager->drop_schema;
+sub _drop_schema {
+    my ($class) = @_;
+    return sub {
+        my $fixture_loader = $class->get_fixture_loader;
+        $fixture_loader->dbmanager->drop_schema;
+    };
 }
 
-sub chado_schema {
-    my ( $class, %arg ) = @_;
-    my $fixture_loader = $class->get_fixture_loader;
-    $fixture_loader->load_fixture
-        if defined $arg{'load-fixture'};
-    return $fixture_loader->schema;
+sub _build_schema {
+    my ($class) = @_;
+    return sub {
+        my (%arg) = @_;
+        my $fixture_loader = $class->get_fixture_loader;
+        $fixture_loader->load_fixtures
+            if defined $arg{'load_fixture'};
+        return $fixture_loader->dynamic_schema;
+    };
 }
 
 sub get_fixture_loader {
-    my ($class) = shift;
-    if ( !$class->_fixture_loader_instance ) {
+    my ($class) = @_;
+    if ( !$class->fixture_loader_instance ) {
         my ( $loader, $dbmanager );
         if ( defined $opt{dsn} ) {
             my ( $scheme, $driver, $attr_str, $attr_hash, $driver_dsn )
@@ -74,15 +86,17 @@ sub get_fixture_loader {
         }
         else {
             $dbmanager
-                = Test::Chado::Factory::DBManager->get_instance('sqlite');
+                = $class->dbmanager_instance
+                ? $class->dbmanager_instance
+                : Test::Chado::Factory::DBManager->get_instance('sqlite');
         }
 
         $loader = Test::Chado::Factory::FixtureLoader->get_instance(
-            $class->_fixture_loader );
+            $class->fixture_loader );
         $loader->dbmanager($dbmanager);
-        $class->_fixture_loader_instance($loader);
+        $class->fixture_loader_instance($loader);
     }
-    return $class->_fixture_loader_instance;
+    return $class->fixture_loader_instance;
 }
 
 1;
