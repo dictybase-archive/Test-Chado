@@ -1,11 +1,11 @@
-package Test::Chado::FixtureLoader::FlatFile;
+package Test::Chado::FixtureLoader::Flatfile;
 
 use Moo;
 use MooX::late;
 use Types::Standard qw/Str/;
 use YAML qw/LoadFile/;
 use Test::Chado::Types qw/Twig Graph GraphT FixtureManager/;
-use Test::Chado::FixtureManager::FlatFile;
+use Test::Chado::FixtureManager::Flatfile;
 use Carp;
 use Graph;
 use XML::Twig;
@@ -25,7 +25,7 @@ has 'fixture_manager' => (
     lazy    => 1,
     default => sub {
         my $self = shift;
-        return Test::Chado::FixtureManager::FlatFile->new;
+        return Test::Chado::FixtureManager::Flatfile->new;
     }
 );
 
