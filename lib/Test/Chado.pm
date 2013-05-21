@@ -16,7 +16,7 @@ use Sub::Exporter -setup => {
         'set_fixture_loader' => \&_set_fixture_loader
     },
     groups => {
-        'default' => [qw/chado_schema reload_schema set_fixture_loader/],
+        'default' => [qw/chado_schema reload_schema set_fixture_loader drop_schema/],
         'schema'  => [qw/chado_schema drop_schema reload_schema/]
     }
 };
@@ -93,6 +93,7 @@ sub get_fixture_loader {
 
         $loader = Test::Chado::Factory::FixtureLoader->get_instance(
             $class->fixture_loader );
+        $dbmanager->deploy_schema;
         $loader->dbmanager($dbmanager);
         $class->fixture_loader_instance($loader);
     }
