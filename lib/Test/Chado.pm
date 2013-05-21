@@ -108,6 +108,7 @@ sub get_fixture_loader {
     return $class->fixture_loader_instance;
 }
 
+
 1;
 
 # ABSTRACT: Build,configure and test chado database backed modules and applications
