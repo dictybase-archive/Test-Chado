@@ -3,8 +3,11 @@ package Test::Chado::Types;
 use Type::Library
     -base,
     -declare =>
-    qw(DBH DbManager BCS Twig Graph GraphT HashiFied FixtureManager FixtureLoader DBIC);
+    qw(DBH DbManager BCS Twig Graph GraphT 
+        HashiFied FixtureManager FixtureLoader DBIC 
+        MaybeFixtureLoader MaybeDbManager);
 use Type::Utils;
+use Types::Standard qw/Maybe/;
 
 class_type DBH,    { class => "DBI::db" };
 class_type DBIC,   { class => "DBIx::Class::Schema" };
@@ -17,5 +20,7 @@ class_type FixtureManager,
 class_type HashiFied,    { class => "Data::Perl::Collection::Hash" };
 role_type DbManager,     { role  => 'Test::Chado::Role::HasDBManager' };
 role_type FixtureLoader, { role  => 'Test::Chado::Role::Helper::WithBcs' };
+declare MaybeFixtureLoader, as Maybe[FixtureLoader];
+declare MaybeDbManager, as Maybe[DbManager];
 
 1;
