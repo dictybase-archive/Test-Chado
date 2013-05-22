@@ -18,7 +18,7 @@ class_type BCS,    { class => "Bio::Chado::Schema" };
 class_type FixtureManager,
     { class => "Test::Chado::FixtureManager::Flatfile" };
 class_type HashiFied,    { class => "Data::Perl::Collection::Hash" };
-class_type TB,           { class => "Test::Builder" };
+class_type TB,           { class => "Test::Tester::Delegate" };
 role_type DbManager,     { role  => 'Test::Chado::Role::HasDBManager' };
 role_type FixtureLoader, { role  => 'Test::Chado::Role::Helper::WithBcs' };
 declare MaybeFixtureLoader, as Maybe[FixtureLoader];

@@ -39,9 +39,10 @@ sub _has_cv {
         else {
             $result_class = 'Cv';
         }
-        $test_builder->ok(
-            $schema->resultset($result_class)->count( { name => $cv } ),
-            $msg );
+        my $count
+            = $schema->resultset($result_class)->count( { name => $cv } );
+        $test_builder->ok( $count, $msg );
+        return $count;
     };
 }
 
@@ -60,11 +61,10 @@ sub _has_feature {
         else {
             $result_class = 'Feature';
         }
-        $test_builder->ok(
-            $schema->resultset($result_class)
-                ->find( { uniquename => $name } ),
-            $msg
-        );
+        my $count = $schema->resultset($result_class)
+            ->count( { uniquename => $name } );
+        $test_builder->ok( $count, $msg );
+        return $count;
     };
 }
 
@@ -83,11 +83,12 @@ sub _has_dbxref {
         else {
             $result_class = 'Dbxref';
         }
-        $test_builder->ok(
-            $schema->resultset($result_class)
-                ->count( { accession => $xref } ),
-            $msg
-        );
+
+        my $count
+            = $schema->resultset($result_class)
+            ->count( { accession => $xref } );
+        $test_builder->ok( $count, $msg );
+        return $count;
     };
 }
 
@@ -106,9 +107,11 @@ sub _has_cvterm {
         else {
             $result_class = 'Cvterm';
         }
-        $test_builder->ok(
-            $schema->resultset($result_class)->count( { name => $cvterm } ),
-            $msg );
+
+        my $count
+            = $schema->resultset($result_class)->count( { name => $cvterm } );
+        $test_builder->ok( $count, $msg );
+        return $count;
     };
 }
 
@@ -128,11 +131,12 @@ sub _has_featureloc {
             $result_class = 'Feature';
         }
 
-        my $rs
+        my $count
             = $schema->resultset($result_class)
             ->search( { uniquename => $name } )
-            ->search_related( 'featureloc_features', {} );
-        $test_builder->ok( $rs->count, $msg );
+            ->search_related( 'featureloc_features', {} )->count;
+        $test_builder->ok( $count, $msg );
+        return $count;
     };
 }
 
