@@ -26,8 +26,10 @@ on 'build' => sub {
 };
 
 on 'test' => sub {
+  requires "Class::Unload" => "0.07";
   requires "Test::Exception" => "0.31";
   requires "Test::More" => "0.94";
+  requires "Test::Tester" => "0.108";
 };
 
 on 'configure' => sub {

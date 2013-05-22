@@ -54,8 +54,10 @@ my %module_build_args = (
     }
   },
   "test_requires" => {
+    "Class::Unload" => "0.07",
     "Test::Exception" => "0.31",
-    "Test::More" => "0.94"
+    "Test::More" => "0.94",
+    "Test::Tester" => "0.108"
   }
 );
 
