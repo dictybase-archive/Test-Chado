@@ -5,7 +5,7 @@ perl:
  - "5.14"
  - "5.16"
 script:
-   - perl Build.PL && ./Build && cover -test
+   - perl Build.PL && HARNESS_OPTIONS=j6 ./Build && cover -test
 install: 
  - "sudo apt-get update"
  - "sudo apt-get install libdb-dev"
