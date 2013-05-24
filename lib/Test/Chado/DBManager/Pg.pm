@@ -86,20 +86,17 @@ sub drop_schema {
 }
 
 sub get_client_to_deploy {
-    my ($self) = @_;
-    if (my $cmd = can_run 'psql' ) {
-        return $cmd;
-    }
+    return;
 }
 
 sub deploy_by_client {
     my ( $self, $client ) = @_;
     my $host = 'localhost';
-    if ( $self->dsn =~ /host=(\S+)/ ) { $host = $1; }
+    if ( $self->dsn =~ /host=([^;]+)/ ) { $host = $1; }
     my $user = $self->user || '';
-    my $pass = $self->pass || '';
+    $ENV{PGPASSWORD} = $self->password || '';
     my $cmd  = [
-        $client, '-h', $host, '-u', $user, '-p', $pass, '-f', $self->ddl,
+        $client, '-h', $host, '-U', $user, '-f', $self->ddl,
         $self->database
     ];
     my ( $success, $error_code, $full_buf,, $stdout_buf, $stderr_buf )
