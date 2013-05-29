@@ -6,12 +6,8 @@ perl:
  - "5.16"
 before_script:
  - createdb -U postgres test_chado
-env:
- - TC_DSN="dbi:Pg:dbname=test_chado"
- - TC_USER="postgres"
- - TC_PASSWORD=""
 script:
-   - perl Build.PL && ./Build && cover -test
+   - perl Build.PL && ./Build && TC_DSN="dbi:Pg:dbname=test_chado" TC_USER="postgres" TC_PASSWORD="" cover -test
 install: 
  - "sudo apt-get update"
  - "sudo apt-get install libdb-dev"
@@ -20,6 +16,5 @@ install:
 branches:
    only:
      - "develop"
-     - "feature/basic-pg-backend"
 after_success:
    cover -report coveralls
