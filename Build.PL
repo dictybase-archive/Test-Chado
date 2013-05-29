@@ -29,6 +29,7 @@ my %module_build_args = (
     "File::Path" => "2.08",
     "File::ShareDir" => "1.02",
     "Graph" => "0.94",
+    "HTTP::Tiny" => "0.029",
     "IPC::Cmd" => "0.58",
     "Module::Path" => "0.09",
     "Module::Runtime" => "0.013",

@@ -4,6 +4,7 @@ requires "DBIx::Class::Fixtures" => "1.001018";
 requires "File::Path" => "2.08";
 requires "File::ShareDir" => "1.02";
 requires "Graph" => "0.94";
+requires "HTTP::Tiny" => "0.029";
 requires "IPC::Cmd" => "0.58";
 requires "Module::Path" => "0.09";
 requires "Module::Runtime" => "0.013";
