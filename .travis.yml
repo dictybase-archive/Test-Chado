@@ -4,13 +4,15 @@ perl:
  - "5.12"
  - "5.14"
  - "5.16"
+before_script:
+ - createdb -U postgres test_chado
 script:
-   - perl Build.PL && HARNESS_OPTIONS=j6 ./Build && cover -test
+   - perl Build.PL && ./Build && TC_DSN="dbi:Pg:dbname=test_chado" TC_USER="postgres" TC_PASSWORD="" cover -test
 install: 
  - "sudo apt-get update"
  - "sudo apt-get install libdb-dev"
  - "cpanm -n --quiet --installdeps ."
- - "cpanm --quiet -n Devel::Cover::Report::Coveralls"
+ - "cpanm --quiet -n Devel::Cover::Report::Coveralls DBD::Pg"
 branches:
    only:
      - "develop"
