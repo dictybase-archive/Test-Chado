@@ -22,7 +22,7 @@ use Sub::Exporter -setup => {
 };
 
 my %opt = ();
-GetOptions( \%opt, 'dsn:s', 'user:s', 'password:s' );
+GetOptions( \%opt, 'dsn:s', 'user:s', 'password:s' , 'postgression', 'testpg');
 
 class_has 'dbmanager_instance' => ( is => 'rw', isa => MaybeDbManager );
 
@@ -84,7 +84,15 @@ sub get_fixture_loader {
     my ($class) = @_;
     if ( !$class->fixture_loader_instance ) {
         my ( $loader, $dbmanager );
-        if ( defined $opt{dsn} ) {
+        if (exists $opt{postgression}) {
+            $dbmanager
+                = Test::Chado::Factory::DBManager->get_instance('postgression');
+        }
+        elsif (exists $opt{testpg}) {
+            $dbmanager
+                = Test::Chado::Factory::DBManager->get_instance('testpg');
+        }
+        elsif ( defined $opt{dsn} ) {
             my ( $scheme, $driver, $attr_str, $attr_hash, $driver_dsn )
                 = DBI->parse_dsn( $opt{dsn} );
             $dbmanager
