@@ -19,10 +19,10 @@ SKIP: {
         lives_ok { $pg->deploy_by_dbi } 'should deploy with dbi';
 
         my $sql = <<'SQL';
-               SELECT reltype FROM pg_class where 
-                 relnamespace = (SELECT oid FROM 
-                 pg_namespace where nspname = 'public')
-                 and relname IN('feature', 'dbxref', 'cvterm')
+    SELECT reltype FROM pg_class where
+    relnamespace = (SELECT oid FROM
+    pg_namespace where nspname = 'public')
+    and relname IN('feature', 'dbxref', 'cvterm')
 SQL
         row_ok(
             sql         => $sql,
@@ -37,10 +37,10 @@ SQL
         lives_ok { $pg->reset_schema } 'should reset the schema';
 
         my $sql = <<'SQL';
-               SELECT reltype FROM pg_class where 
-                 relnamespace = (SELECT oid FROM 
-                 pg_namespace where nspname = 'public')
-                 and relname IN('feature', 'dbxref', 'cvterm', 'cv')
+    SELECT reltype FROM pg_class where
+    relnamespace = (SELECT oid FROM
+    pg_namespace where nspname = 'public')
+    and relname IN('feature', 'dbxref', 'cvterm', 'cv')
 SQL
         row_ok(
             sql         => $sql,
@@ -69,7 +69,7 @@ SQL
         );
 
         my $sql = <<'SQL';
-    SELECT CVTERM.* from CVTERM join CV on CV.CV_ID=CVTERM.CV_ID 
+    SELECT CVTERM.* from CVTERM join CV on CV.CV_ID=CVTERM.CV_ID
     WHERE CV.NAME = 'sequence';
 SQL
 
@@ -80,7 +80,7 @@ SQL
         );
 
         $sql = <<'SQL';
-    SELECT CVTERM.* from CVTERM join CV on CV.CV_ID=CVTERM.CV_ID 
+    SELECT CVTERM.* from CVTERM join CV on CV.CV_ID=CVTERM.CV_ID
     WHERE CV.NAME = 'relationship';
 SQL
         row_ok(
@@ -109,7 +109,7 @@ SQL
         );
 
         my $sql = <<'SQL';
-    SELECT CVTERM.* from CVTERM join CV on CV.CV_ID=CVTERM.CV_ID 
+    SELECT CVTERM.* from CVTERM join CV on CV.CV_ID=CVTERM.CV_ID
     WHERE CV.NAME = 'sequence';
 SQL
 
@@ -120,7 +120,7 @@ SQL
         );
 
         $sql = <<'SQL';
-    SELECT CVTERM.* from CVTERM join CV on CV.CV_ID=CVTERM.CV_ID 
+    SELECT CVTERM.* from CVTERM join CV on CV.CV_ID=CVTERM.CV_ID
     WHERE CV.NAME = 'relationship';
 SQL
         row_ok(
@@ -129,69 +129,6 @@ SQL
             sql         => $sql
         );
         $pg->drop_schema;
-
-    };
-
-    subtest 'schema and fixture managements with postgression' => sub {
-        local @ARGV = ('--postgression');
-
-        load Test::Chado, ':default';
-
-        my $schema;
-        lives_ok { $schema = chado_schema() } 'should run chado_schema';
-        isa_ok( $schema, 'Bio::Chado::Schema' );
-        isa_ok(
-            Test::Chado->get_fixture_loader->dbmanager,
-            'Test::Chado::DBManager::Postgression'
-        );
-
-        local $Test::DatabaseRow::dbh
-            = Test::Chado->get_fixture_loader->dbmanager->dbh;
-
-        my $sql = <<'SQL';
-               SELECT reltype FROM pg_class where 
-                 relnamespace = (SELECT oid FROM 
-                 pg_namespace where nspname = 'public')
-                 and relname IN('feature', 'dbxref', 'cvterm')
-SQL
-        row_ok(
-            sql         => $sql,
-            results     => 3,
-            description => 'should have three existing table'
-        );
-
-        lives_ok { drop_schema() } 'should run drop_schema';
-        row_ok(
-            sql         => $sql,
-            results     => 0,
-            description => 'should not have three existing table'
-        );
-
-        lives_ok { $schema = chado_schema( load_fixture => 1 ) }
-        'should accept fixture loading option';
-        isa_ok( $schema, 'Bio::Chado::Schema' );
-
-        is( $schema->resultset('Organism::Organism')->count( {} ),
-            12, 'should loaded 12 organisms' );
-
-        lives_ok { reload_schema() } 'should reloads the schema';
-
-        local $Test::DatabaseRow::dbh
-            = Test::Chado->get_fixture_loader->dbmanager->dbh;
-
-        my $sql = <<'SQL';
-               SELECT reltype FROM pg_class where 
-                 relnamespace = (SELECT oid FROM 
-                 pg_namespace where nspname = 'public')
-                 and relname IN('feature')
-SQL
-        row_ok(
-            sql         => $sql,
-            results     => 1,
-            description => 'should have feature table after loading'
-        );
-        is( $schema->resultset('Organism::Organism')->count( {} ),
-            0, 'should not have any fixture after reload' );
 
     };
 }
