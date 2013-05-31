@@ -7,14 +7,15 @@ perl:
 before_script:
  - createdb -U postgres test_chado
 script:
-   - perl Build.PL && ./Build && TC_DSN="dbi:Pg:dbname=test_chado" TC_USER="postgres" TC_PASSWORD="" cover -test
+   - perl Build.PL && ./Build && TC_TESTPG=1 TC_DSN="dbi:Pg:dbname=test_chado" TC_USER="postgres" TC_PASSWORD="" cover -test
 install: 
  - "sudo apt-get update"
  - "sudo apt-get install libdb-dev"
  - "cpanm -n --quiet --installdeps ."
- - "cpanm --quiet -n Devel::Cover::Report::Coveralls DBD::Pg"
+ - "cpanm --quiet -n Devel::Cover::Report::Coveralls DBD::Pg Test::PostgreSQL"
 branches:
    only:
      - "develop"
+     - "feature/postgression-backend"
 after_success:
    cover -report coveralls
