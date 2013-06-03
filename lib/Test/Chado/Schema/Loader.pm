@@ -5,3 +5,9 @@ use base qw/DBIx::Class::Schema::Loader/;
 __PACKAGE__->naming('current');
 
 1;
+
+=head1 DESCRIPTION
+
+Its a subclass of L<DBIx::Class::Schema::Loader> primarilly to use with B<Sqlite> DBManager.
+
+

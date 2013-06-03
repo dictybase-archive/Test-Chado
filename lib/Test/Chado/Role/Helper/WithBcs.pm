@@ -298,30 +298,113 @@ sub search_cvterm_ids_by_namespace {
 
 1;    # Magic true value required at end of module
 
-# ABSTRACT: L<Bio::Chado::Schema> base Moo role to manage various db,  cv,  cvterm and
-# dbxref values
 
-=attr cvrow
+=head1 DESCRIPTION
 
-=attr dbrow
+L<Bio::Chado::Schema> base Moo role to manage various db,  cv,  cvterm and dbxref values. This is primarilly consumed by various B<flatfile> based fixture loaders.
 
-=attr cvterm_row
+=head1 API
 
-=method default_cv_id
+=head2 Attributes
 
-=method find_cv_id
+=over
 
-=method find_or_create_cv_id
+=item Handling L<Bio::Chado::Schema::Result::Cv> object
 
-=method find_or_create_cvterm_id
+=over
 
-=method find_cvterm_id
+=item get_cvrow(term name)
 
-=method search_cvterm_id_by_namespace
+Gets an cached instances of L<Bio::Chado::Schema::Result::Cv>
 
-=method default_db_id
+=item set_cvrow(term name,L<Bio::Chado::Schema::Result::Cv>)
 
-=method find_db_id
+Cache an L<Bio::Chado::Schema::Result::Cv> object
 
-=method find_or_create_db_id
+=item exist_cvrow(term name)
+
+Check for L<Bio::Chado::Schema::Result::Cv> in the cache
+
+=back
+
+=back
+
+
+=over
+
+=item Handling of L<Bio::Chado::Schema::Result::Cvterm>
+
+=over
+
+=item get_cvterm_row
+
+=item set_cvterm_row
+
+=item exist_cvterm_row
+
+=back
+
+=back
+
+
+=over
+
+=item Handling of L<Bio::Chado::Schema::Result::Db> 
+
+=over
+
+=item get_dbrow
+
+=item set_dbrow
+
+=item exist_dbrow
+
+=back
+
+=back
+
+=over
+
+=item dbmanager
+
+Instance of L<Test::Chado::Role::Role::HasDBManager>
+
+=item schema 
+
+Instance of L<Bio::Chado::Schema>
+
+=back
+
+
+=head2 Methods
+
+=over
+
+=item find_cv_id(cv name)
+
+Given a cv name returns cv_id column value from B<cv> table.
+
+=item find_or_create_cv_id(cv name)
+
+Similar to previous, however creates a cv if absent in the database.
+
+=item find_cvterm_id
+
+Similar to L<find_cv_id> method, however works on cvterm table to return the cvterm_id.
+
+=item find_or_create_cvterm_id(cvterm,cv,db,dbxref)
+
+Similar to previous L<find_or_create_cv_id> method, however needs few more parameters to work.
+
+=item search_cvterm_ids_by_namespace(cv name)
+
+Given a cv name returns a list(arrayref) of cvterm_ids
+
+=item find_db_id(db name)
+
+Given a db name returns a db_id from db table
+
+=item find_or_create_db_id(db name)
+
+=back
 
