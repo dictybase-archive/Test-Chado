@@ -189,6 +189,8 @@ B<load_fixture> : Pass a true value(1) to load the default fixture
 
 =back
 
+=over
+
 =item drop_schema
 
 =item reload_schema
