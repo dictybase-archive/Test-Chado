@@ -1,5 +1,5 @@
 {
-   "abstract" : "Build,configure and test chado database backed modules and applications",
+   "abstract" : "Unit testing for chado database modules and applications",
    "author" : [
       "Siddhartha Basu <biosidd@gmail.com>"
    ],

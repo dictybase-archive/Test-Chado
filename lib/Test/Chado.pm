@@ -119,7 +119,7 @@ sub get_fixture_loader {
 
 1;
 
-# ABSTRACT: Fearless testing of  chado database backed modules and applications
+# ABSTRACT: Unit testing for chado database modules and applications
 
 =head1 Build Status
 

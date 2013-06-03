@@ -12,7 +12,7 @@ my %module_build_args = (
   "configure_requires" => {
     "Module::Build" => "0.3601"
   },
-  "dist_abstract" => "Build,configure and test chado database backed modules and applications",
+  "dist_abstract" => "Unit testing for chado database modules and applications",
   "dist_author" => [
     "Siddhartha Basu <biosidd\@gmail.com>"
   ],
