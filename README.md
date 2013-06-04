@@ -8,7 +8,53 @@ version 1.0.0
 
 # SYNOPSIS
 
-# DESCRIPTION
+#### Start with a perl module
+
+This means you have a module with namespace(with or without double colons), along with __Makefile.PL__ or __Build.PL__ or even __dist.ini__. You have your libraries in
+__lib/__ folder and going to write tests in __t/__ folder.
+This could an existing or new module, anything is fine.
+
+#### Now write tests in your .t file(t/dbtest.t for example)
+
+    use Test::More;
+    use Test::Chado;
+    use Test::Chado::Common;
+
+    my $schema = chado_schema(load_fixtures => 1);
+
+    has_cv($schema,'sequence', 'should have sequence ontology');
+    has_cvterm($schema, 'part_of', 'should have term part_of');
+    has_db($schema, 'SO', 'should have SO in db table');
+    has_dbxref($schema, '0000010', 'should have 0000010 in dbxref');
+
+    drop_schema();
+
+#### Run any test commands to test it against chado sqlite
+
+    prove -lv t/dbtest.t
+
+    ./Build test 
+
+    make test
+
+#### Run against postgresql
+
+    #Make sure you have a database with enough permissions
+    
+
+    prove -l --dsn "dbi:Pg:dbname=testchado;host=localhost"  --user tucker --password halo t/dbtest.t
+
+    ./Build test --dsn "dbi:Pg:dbname=testchado;host=localhost"  --user tucker --password halo
+
+    make test  --dsn "dbi:Pg:dbname=testchado;host=localhost"  --user tucker --password halo
+
+#### Run against postgresql without any custom server
+
+    prove -l --postgression t/dbtest.t
+
+    ./Build test --postgression
+
+    make test --postgression
 
 # Build Status
 
@@ -19,6 +65,34 @@ version 1.0.0
 <a href='https://coveralls.io/r/dictyBase/Test-Chado'><img
 src='https://coveralls.io/repos/dictyBase/Test-Chado/badge.png?branch=develop'
 alt='Coverage Status' /></a>
+
+# DOCUMENTATION
+
+Use the __quick start__ or pick any of the section below to start your testing. 
+
+## [Test::Chado::Manual::QuickStart](http://search.cpan.org/perldoc?Test::Chado::Manual::QuickStart)
+
+Quick start for using __Test::Chado__
+
+## [Test::Chado::Manual::TestingDistribution](http://search.cpan.org/perldoc?Test::Chado::Manual::TestingDistribution)
+
+How to test perl module with __Test::Chado__
+
+## [Test::Chado::Manual::TestingWebApp](http://search.cpan.org/perldoc?Test::Chado::Manual::TestingWebApp)
+
+How to test web applications with __Test::Chado__
+
+## [Test::Chado::Manual::TestingPostgres](http://search.cpan.org/perldoc?Test::Chado::Manual::TestingPostgres)
+
+How to test with __Postgresql__ backends.
+
+## [Test::Chado::Manual::CustomSchema](http://search.cpan.org/perldoc?Test::Chado::Manual::CustomSchema)
+
+Loading custom schema(sql statements) during testing with __Test::Chado__
+
+## [Test::Chado::Manual::CustomFixtures](http://search.cpan.org/perldoc?Test::Chado::Manual::CustomFixtures)
+
+Loading custom fixtures(data) during testing.
 
 # API
 
