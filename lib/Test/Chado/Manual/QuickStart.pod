@@ -1,0 +1,78 @@
+#PODNAME: bobby_tables.pl
+
+=head2 Quick Start
+
+This guide assumes familiarity with following concepts ..
+
+=over
+
+=item 
+
+Writing unit test with L<Test::More>
+
+=item
+
+Running unit tests either with L<prove>, L<Module::Build> or L<Makefile|ExtUtils::MakeMaker>
+
+=item
+
+Working knowledge of L<DBIx::Class> or preferably L<Bio::Chado::Schema>
+
+=item
+
+Have used or using L<GMOD|http://gmod.org> L<chado|http://gmod.org/wiki/Introduction_to_Chado> schema.
+
+=back
+
+=head4 Basic setup
+
+Install
+   
+    cpanm Test::Chado Module::Starter
+
+Install from github(if needed)
+
+    cpanm git://github.com/dictyBase/Test-Chado.git
+
+Create module skeleton
+
+    module-starter --module=TestChado::QuickStart --author="Sidd Basu" --email=sidd.basu@gmail.com
+
+    Added to MANIFEST: Changes
+    Added to MANIFEST: ignore.txt
+    Added to MANIFEST: lib/TestChado/QuickStart.pm
+    Added to MANIFEST: Makefile.PL
+    Added to MANIFEST: MANIFEST
+    Added to MANIFEST: README
+    Added to MANIFEST: t/00-load.t
+    Added to MANIFEST: t/boilerplate.t
+    Added to MANIFEST: t/manifest.t
+    Added to MANIFEST: t/pod-coverage.t
+    Added to MANIFEST: t/pod.t
+    Created starter directories and files
+
+
+=head4 Write test file
+
+Write a test file called B<t/test_chado.t> and include the two modules L<Test::Chado> and L<Test::Chado::Common>
+
+    use Test::More qw/no_plan/;
+    use Test::Chado;
+    use Test::Chado::Common;
+
+Now load the default test fixtures and check their existence in the database
+
+    my $schema = chado_schema(load_fixtures => 1)
+    has_cv($schema,'sequence', 'should have sequence cv namespace');
+
+At the end it's a good practice to drop the schema
+
+    drop_schema()
+
+=head4 Run the test 
+
+    prove -vl t/test_chado.t
+    
+Should produce the following output
+
+
