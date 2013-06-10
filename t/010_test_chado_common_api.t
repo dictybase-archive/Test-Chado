@@ -121,7 +121,7 @@ subtest 'features of has_featureloc method' => sub {
 
     my $desc = 'should have existing feature with location';
     check_test(
-        sub { has_feature $schema, 'test-transcript', $desc },
+        sub { has_featureloc $schema, 'test-transcript', $desc },
         {   ok   => 1,
             name => $desc
         },
@@ -129,7 +129,7 @@ subtest 'features of has_featureloc method' => sub {
     );
 
     $desc = 'should fail with non existing feature';
-    check_test( sub { has_feature $schema, 'fake', $desc },
+    check_test( sub { has_featureloc $schema, 'fake', $desc },
         { ok => 0, name => $desc }, $desc );
     drop_schema();
 };
