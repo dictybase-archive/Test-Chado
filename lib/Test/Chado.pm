@@ -143,7 +143,7 @@ alt='Coverage Status' /></a>
 
 This means you have a module with namespace(with or without double colons), along with B<Makefile.PL> or B<Build.PL> or even B<dist.ini>. You have your libraries in
 B<lib/> folder and going to write tests in B<t/> folder.
-This could an existing or new module, anything is fine.
+This could an existing or new module, anything would work.
 
 =head4 Now write tests in your .t file(t/dbtest.t for example)
   
@@ -178,7 +178,7 @@ This could an existing or new module, anything is fine.
 
   make test  --dsn "dbi:Pg:dbname=testchado;host=localhost"  --user tucker --password halo
 
-=head4 Run against postgresql without any custom server
+=head4 Run against postgresql without setting any custom server
 
   prove -l --postgression t/dbtest.t
 
@@ -191,29 +191,17 @@ This could an existing or new module, anything is fine.
 
 Use the B<quick start> or pick any of the section below to start your testing. 
 
-=head2 L<Test::Chado::Manual::QuickStart>
+=head3 L<Test::Chado::Manual::QuickStart> - Quick start for using B<Test::Chado>
 
-Quick start for using B<Test::Chado>
+=head3 L<Test::Chado::Manual::TestingWithDistribution> - How to test perl module with B<Test::Chado>
 
-=head2 L<Test::Chado::Manual::TestingDistribution>
+=head3 L<Test::Chado::Manual::TestingWithWebApp> - How to test web applications with B<Test::Chado>
 
-How to test perl module with B<Test::Chado>
+=head3 L<Test::Chado::Manual::TestingWithPostgres> - How to test with B<Postgresql> backends.
 
-=head2 L<Test::Chado::Manual::TestingWebApp>
+=head3 L<Test::Chado::Manual::TestingWithCustomSchema> - Loading custom schema(sql statements) during testing with B<Test::Chado>
 
-How to test web applications with B<Test::Chado>
-
-=head2 L<Test::Chado::Manual::TestingPostgres>
-
-How to test with B<Postgresql> backends.
-
-=head2 L<Test::Chado::Manual::CustomSchema>
-
-Loading custom schema(sql statements) during testing with B<Test::Chado>
-
-=head2 L<Test::Chado::Manual::CustomFixtures>
-
-Loading custom fixtures(data) during testing.
+=head3 L<Test::Chado::Manual::TestingWithCustomFixtures> - Loading custom fixtures(data) during testing.
 
 
 =head1 API
