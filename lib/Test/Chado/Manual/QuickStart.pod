@@ -287,66 +287,6 @@ And here is the entire code
         }
     }
 
-=head4 Running through Makefile
-
-Edit the existing Makefile.PL and add the L<Test::Chado> dependency
-
-    use 5.006;
-    use strict;
-    use warnings;
-    use ExtUtils::MakeMaker;
-
-    WriteMakefile(
-        NAME                => 'TestChado::QuickStart',
-        AUTHOR              => q{Siddhartha Basu <sidd.basu@gmail.com>},
-        VERSION_FROM        => 'lib/TestChado/QuickStart.pm',
-        ABSTRACT_FROM       => 'lib/TestChado/QuickStart.pm',
-            ($ExtUtils::MakeMaker::VERSION >= 6.3002
-                ? ('LICENSE'=> 'perl')
-                : ()),
-        PL_FILES            => {},
-        PREREQ_PM => {
-            'Test::Chado' => '1.0.0'
-        },
-        dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
-        clean               => { FILES => 'TestChado-QuickStart-*' },
-    );
-
-Then make and run the tests
-
-    perl Makefile.PL && make test
-
-
-=head4 Running through Build.PL
-
-    use strict;
-    use warnings;
-    use Module::Build;
-
-
-
-    my %module_build_args = (
-        "configure_requires" => {
-            "Module::Build" => "0.3601"
-         },
-        "dist_abstract" => "Unit testing for chado database modules and applications",
-        "dist_author" => [
-                "Siddhartha Basu <biosidd\@gmail.com>"
-            ],
-        "dist_name" => "TestChado-QuickStart",
-        "dist_version" => "1.0.0",
-        "license" => "perl",
-        "module_name" => "TestChado::QuickStart",
-        "requires" => { 'Test::Chado' => '1.0.0'}
-    );
-
-    my $build = Module::Build->new(%module_build_args);
-    $build->create_build_script;
-
-Run as usual
-
-    perl Build.PL && ./Build test
-
 
 =head4 What's next
 
