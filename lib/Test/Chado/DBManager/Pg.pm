@@ -14,8 +14,12 @@ with 'Test::Chado::Role::HasDBManager';
 before [ 'deploy_schema', 'deploy_by_dbi' ] => sub {
     my ($self) = shift;
     my $namespace = $self->schema_namespace;
-    $self->dbh->do(qq{CREATE SCHEMA $namespace});
-    $self->dbh->do(qq{SET search_path TO $namespace});
+    my $user = $self->user;
+    my $dbh = $self->dbh;
+
+    $dbh->do(qq{DROP SCHEMA IF EXISTS $namespace CASCADE});
+    $dbh->do(qq{CREATE SCHEMA $namespace AUTHORIZATION $user});
+    $dbh->do(qq{SET search_path TO $namespace});
 };
 
 has 'schema_namespace' => (
@@ -24,8 +28,7 @@ has 'schema_namespace' => (
     lazy    => 1,
     default => sub {
         my ($self) = @_;
-        return join '',
-            rand_chars( set => 'alpha', min => 9, max => 10 );
+        return join '', rand_chars( set => 'loweralpha', min => 9, max => 10 );
     }
 );
 
@@ -65,8 +68,46 @@ sub drop_database {
 
 sub drop_schema {
     my ($self) = @_;
+    my $dbh    = $self->dbh;
+    #my $tsth   = $dbh->prepare(
+        #"SELECT relname FROM pg_class WHERE relnamespace IN
+          #(SELECT oid FROM pg_namespace WHERE nspname='public')
+          #AND relkind='r';"
+    #);
+
+    #my $vsth = $dbh->prepare(
+        #"SELECT viewname FROM pg_views WHERE schemaname NOT IN ('pg_catalog',
+			 #'information_schema') AND viewname !~ '^pg_'"
+    #);
+
+    #my $seqth = $dbh->prepare(
+        #"SELECT relname FROM pg_class WHERE relkind = 'S' AND relnamespace IN ( SELECT oid FROM
+	 #pg_namespace WHERE nspname NOT LIKE 'pg_%' AND nspname != 'information_schema')"
+    #);
+
+    #$tsth->execute;
+    #while ( my ($table) = $tsth->fetchrow_array ) {
+        #$dbh->do(qq{ drop table $table cascade });
+    #}
+
+    #my $seqs = join( ",",
+        #map { $_->{relname} }
+            #@{ $dbh->selectall_arrayref( $seqth, { Slice => {} } ) } );
+
+    #if ($seqs) {
+        #$dbh->do(qq{ drop sequence if exists $seqs });
+    #}
+
+    #my $views = join( ",",
+        #map { $_->{viewname} }
+            #@{ $dbh->selectall_arrayref( $vsth, { Slice => {} } ) } );
+
+    #if ($views) {
+        #$dbh->do(qq{ drop view if exists $views });
+    #}
+
     my $namespace = $self->schema_namespace;
-    $self->dbh->do(qq{DROP SCHEMA $namespace CASCADE});
+    $dbh->do(qq{DROP SCHEMA IF EXISTS $namespace CASCADE});
 }
 
 sub get_client_to_deploy {
