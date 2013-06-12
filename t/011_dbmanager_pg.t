@@ -1,3 +1,4 @@
+use strict;
 use Test::More qw/no_plan/;
 use Test::Exception;
 use IPC::Cmd qw/can_run/;
@@ -19,37 +20,37 @@ SKIP: {
 
     subtest 'custom pg backend with DBI' => sub {
 
+        my $namespace = $pg->schema_namespace;
+        like( $namespace, qr/^\w+$/,
+            'should match an alphanumeric namespace' );
+
         lives_ok { $pg->deploy_by_dbi } 'should deploy with dbi';
-        $sql = <<'SQL';
-               SELECT reltype FROM pg_class where 
-                 relnamespace = (SELECT oid FROM 
-                 pg_namespace where nspname = 'public')
-                 and relname IN('feature', 'dbxref', 'cvterm')
-SQL
         row_ok(
-            sql         => $sql,
-            results     => 3,
-            description => 'should have three existing table'
+            table       => "information_schema.tables",
+            where       => [ "table_schema" => $namespace ],
+            results     => 173,
+            description => 'should have all existing tables'
         );
         lives_ok { $pg->drop_schema } "should drop the schema";
     };
 
-    subtest 'deploy and reset schema with Pg backend' => sub {
-        lives_ok { $pg->deploy_schema } 'should deploy';
-        lives_ok { $pg->reset_schema } 'should reset the schema';
+    #subtest 'deploy and reset schema with Pg backend' => sub {
+    #lives_ok { $pg->deploy_schema } 'should deploy';
+    #lives_ok { $pg->reset_schema } 'should reset the schema';
 
-        $sql = <<'SQL';
-               SELECT reltype FROM pg_class where 
-                 relnamespace = (SELECT oid FROM 
-                 pg_namespace where nspname = 'public')
-                 and relname IN('feature', 'dbxref', 'cvterm', 'cv')
-SQL
-        row_ok(
-            sql         => $sql,
-            results     => 4,
-            description => 'should have three existing table'
-        );
-        lives_ok { $pg->drop_schema } "should drop the schema";
+    #my $namespace = $pg->schema_namespace;
+    #$sql = <<'SQL';
+    #SELECT reltype FROM pg_class where
+    #relnamespace = (SELECT oid FROM
+    #pg_namespace where nspname = ?)
+    #and relname IN('feature', 'dbxref', 'cvterm', 'cv')
+    #SQL
+    #row_ok(
+    #sql         => [ $sql, $namespace ],
+    #results     => 4,
+    #description => 'should have three existing table'
+    #);
+    #lives_ok { $pg->drop_schema } "should drop the schema";
 
-    };
+    #};
 }
