@@ -12,10 +12,10 @@ has 'is_dynamic_schema' => ( is => 'ro', isa => Bool, default => 0 );
 with 'Test::Chado::Role::HasDBManager';
 
 before [ 'deploy_schema', 'deploy_by_dbi' ] => sub {
-    my ($self) = shift;
+    my ($self)    = shift;
     my $namespace = $self->schema_namespace;
-    my $user = $self->user;
-    my $dbh = $self->dbh;
+    my $user      = $self->user;
+    my $dbh       = $self->dbh;
 
     $dbh->do(qq{DROP SCHEMA IF EXISTS $namespace CASCADE});
     $dbh->do(qq{CREATE SCHEMA $namespace AUTHORIZATION $user});
@@ -28,14 +28,16 @@ has 'schema_namespace' => (
     lazy    => 1,
     default => sub {
         my ($self) = @_;
-        return join '', rand_chars( set => 'loweralpha', min => 9, max => 10 );
+        return join '',
+            rand_chars( set => 'loweralpha', min => 9, max => 10 );
     }
 );
 
 sub _build_dbh {
     my ($self) = @_;
-    my $dbh = DBI->connect( $self->dsn, $self->user, $self->password,
-        $self->dbi_attributes );
+    my $attr = $self->dbi_attributes;
+    $attr->{AutoCommit} = 1;
+    my $dbh = DBI->connect( $self->dsn, $self->user, $self->password, $attr );
     $dbh->do(qq{SET client_min_messages=WARNING});
     return $dbh;
 }
@@ -58,54 +60,20 @@ sub _build_database {
 sub _build_driver { return 'Pg' }
 
 sub create_database {
-    return 1;
+    my ($self) = @_;
+    my $dbname = $self->database;
+    $self->dbh->do(qq{CREATE DATABASE $dbname});
 }
 
 sub drop_database {
     my ($self) = @_;
-    return 1;
+    my $dbname = $self->database;
+    $self->dbh->do(qq{DROP DATABASE $dbname});
 }
 
 sub drop_schema {
-    my ($self) = @_;
-    my $dbh    = $self->dbh;
-    #my $tsth   = $dbh->prepare(
-        #"SELECT relname FROM pg_class WHERE relnamespace IN
-          #(SELECT oid FROM pg_namespace WHERE nspname='public')
-          #AND relkind='r';"
-    #);
-
-    #my $vsth = $dbh->prepare(
-        #"SELECT viewname FROM pg_views WHERE schemaname NOT IN ('pg_catalog',
-			 #'information_schema') AND viewname !~ '^pg_'"
-    #);
-
-    #my $seqth = $dbh->prepare(
-        #"SELECT relname FROM pg_class WHERE relkind = 'S' AND relnamespace IN ( SELECT oid FROM
-	 #pg_namespace WHERE nspname NOT LIKE 'pg_%' AND nspname != 'information_schema')"
-    #);
-
-    #$tsth->execute;
-    #while ( my ($table) = $tsth->fetchrow_array ) {
-        #$dbh->do(qq{ drop table $table cascade });
-    #}
-
-    #my $seqs = join( ",",
-        #map { $_->{relname} }
-            #@{ $dbh->selectall_arrayref( $seqth, { Slice => {} } ) } );
-
-    #if ($seqs) {
-        #$dbh->do(qq{ drop sequence if exists $seqs });
-    #}
-
-    #my $views = join( ",",
-        #map { $_->{viewname} }
-            #@{ $dbh->selectall_arrayref( $vsth, { Slice => {} } ) } );
-
-    #if ($views) {
-        #$dbh->do(qq{ drop view if exists $views });
-    #}
-
+    my ($self)    = @_;
+    my $dbh       = $self->dbh;
     my $namespace = $self->schema_namespace;
     $dbh->do(qq{DROP SCHEMA IF EXISTS $namespace CASCADE});
 }
