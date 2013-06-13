@@ -21,8 +21,9 @@ sub _build_dbh {
     $self->user( $resp_hash->{username} );
     $self->password( $resp_hash->{password} );
 
-    my $dbh = DBI->connect( $self->dsn, $self->user, $self->password,
-        $self->dbi_attributes );
+    my $attr = $self->dbi_attributes;
+    $attr->{AutoCommit} = 1;
+    my $dbh = DBI->connect( $self->dsn, $self->user, $self->password, $attr );
     $dbh->do(qq{SET client_min_messages=WARNING});
     return $dbh;
 }
