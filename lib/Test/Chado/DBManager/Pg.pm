@@ -18,7 +18,7 @@ before [ 'deploy_schema', 'deploy_by_dbi' ] => sub {
     my $dbh       = $self->dbh;
 
     $dbh->do(qq{DROP SCHEMA IF EXISTS $namespace CASCADE});
-    $dbh->do(qq{CREATE SCHEMA $namespace AUTHORIZATION $user});
+    $dbh->do(qq{CREATE SCHEMA $namespace });
     $dbh->do(qq{SET search_path TO $namespace});
 };
 
