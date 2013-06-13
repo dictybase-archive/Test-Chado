@@ -25,7 +25,9 @@ has 'dynamic_schema' => (
     lazy    => 1,
     default => sub {
         my $self = shift;
-        if ( $self->dbmanager->can('is_dynamic_schema') and $self->dbmanager->is_dynamic_schema ) {
+        if (    $self->dbmanager->can('is_dynamic_schema')
+            and $self->dbmanager->is_dynamic_schema )
+        {
             load 'Test::Chado::Schema::Loader';
             return Test::Chado::Schema::Loader->connect(
                 sub { return $self->dbmanager->dbh } );
@@ -297,7 +299,6 @@ sub search_cvterm_ids_by_namespace {
 }
 
 1;    # Magic true value required at end of module
-
 
 =head1 DESCRIPTION
 

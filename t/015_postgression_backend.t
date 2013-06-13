@@ -1,10 +1,13 @@
+use strict;
 use Test::More qw/no_plan/;
 use Test::Exception;
 use Test::DatabaseRow;
 use Module::Load;
+use SQL::Abstract;
 
 use_ok('Test::Chado::DBManager::Postgression');
-my $pg = new_ok 'Test::Chado::DBManager::Postgression';
+my $pg   = new_ok 'Test::Chado::DBManager::Postgression';
+my $sqla = SQL::Abstract->new;
 
 SKIP: {
     skip 'Environment variable TC_POSTGRESSION not set',
@@ -14,38 +17,42 @@ SKIP: {
 
     lives_ok { $pg->dbh } 'should setup a dbh handle';
     local $Test::DatabaseRow::dbh = $pg->dbh;
+    my $namespace = $pg->schema_namespace;
 
     subtest 'postgression backend with DBI' => sub {
         lives_ok { $pg->deploy_by_dbi } 'should deploy with dbi';
-
-        my $sql = <<'SQL';
-    SELECT reltype FROM pg_class where
-    relnamespace = (SELECT oid FROM
-    pg_namespace where nspname = 'public')
-    and relname IN('feature', 'dbxref', 'cvterm')
-SQL
         row_ok(
-            sql         => $sql,
-            results     => 3,
-            description => 'should have three existing table'
+            sql => [
+                $sqla->select(
+                    'information_schema.tables',
+                    "*",
+                    {   "table_schema" => $namespace,
+                        "table_name" => { -in => [qw/db feature cv cvterm/] }
+                    }
+                )
+            ],
+            results     => 4,
+            description => 'should have all four tables'
         );
+
         lives_ok { $pg->drop_schema } "should drop the schema";
     };
 
     subtest 'deploy and reset schema with Pg backend' => sub {
         lives_ok { $pg->deploy_schema } 'should deploy';
         lives_ok { $pg->reset_schema } 'should reset the schema';
-
-        my $sql = <<'SQL';
-    SELECT reltype FROM pg_class where
-    relnamespace = (SELECT oid FROM
-    pg_namespace where nspname = 'public')
-    and relname IN('feature', 'dbxref', 'cvterm', 'cv')
-SQL
         row_ok(
-            sql         => $sql,
+            sql => [
+                $sqla->select(
+                    'information_schema.tables',
+                    "*",
+                    {   "table_schema" => $namespace,
+                        "table_name" => { -in => [qw/db feature cv cvterm/] }
+                    }
+                )
+            ],
             results     => 4,
-            description => 'should have three existing table'
+            description => 'should have all four tables'
         );
         lives_ok { $pg->drop_schema } "should drop the schema";
 
