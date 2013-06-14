@@ -1,0 +1,51 @@
+#PODNAME: bobby_tables4.pl
+
+=head2 Using Test::Chado with web applications
+
+Using B<Test::Chado> with web applications is not so different than using it with a distributable perl module. However, the most use will
+be to load fixtures before every test to check the B<GET> request and to check for a database entry probably after every B<POST> request.
+Here an example is given with L<Mojolicious> framework for better understanding the use cases.
+
+=head3 Setup
+
+=head4 Install Mojolicious
+
+    cpanm Mojolicious
+
+This guide assume to have you running v4.0+.
+
+=head4 Create application
+
+     mojo generate app TestChadoWithMojo                                                                                                                                 rbenv:system 
+        [mkdir] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/script
+        [write] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/script/test_chado_with_mojo
+        [chmod] test_chado_with_mojo/script/test_chado_with_mojo 744
+        [mkdir] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/lib
+        [write] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/lib/TestChadoWithMojo.pm
+        [mkdir] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/lib/TestChadoWithMojo
+        [write] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/lib/TestChadoWithMojo/Example.pm
+        [mkdir] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/t
+        [write] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/t/basic.t
+        [mkdir] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/log
+        [mkdir] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/public
+        [write] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/public/index.html
+        [mkdir] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/templates/layouts
+        [write] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/templates/layouts/default.html.ep
+        [mkdir] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/templates/example
+        [write] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/templates/example/welcome.html.ep
+
+=head4 Add Test::Chado as dependencies
+
+Since web applications are generally not meant to packaged and/or distributable, here a L<cpanfile> is created for declaring dependencies.
+Save the below as cpanfile inside the project folder
+
+    requires 'Mojolicious', '4.0';
+    requires 'Mojolicious::Plugin::Database', '1.08';
+    on 'test' => sub {
+        requires 'Test::Chado', '1.0.0';
+    };
+
+Install Test::Chado
+
+    cpanm Test::Chado
+
