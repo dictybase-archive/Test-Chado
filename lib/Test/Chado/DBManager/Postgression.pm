@@ -5,6 +5,7 @@ use Moo;
 use DBI;
 use HTTP::Tiny;
 use JSON;
+use feature qw/say/;
 extends qw/Test::Chado::DBManager::Pg/;
 
 sub _build_dbh {
@@ -13,7 +14,11 @@ sub _build_dbh {
         default_headers => { 'Accept' => 'application/json' } );
     my $response = $ua->get('http://api.postgression.com');
 
-    die "request to postgression failed\n" if !$response->{success};
+    if (!$response->{success}) {
+        say "request to postgression failed !!!!";
+        die "status: $response->{status}\treason: $response->{reason}\n";
+    }
+
     my $resp_hash = decode_json $response->{content};
     my $dsn
         = "dbi:Pg:dbname=$resp_hash->{dbname};host=$resp_hash->{host};port=$resp_hash->{port}";
