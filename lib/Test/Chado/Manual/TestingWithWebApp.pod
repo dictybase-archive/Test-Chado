@@ -36,7 +36,7 @@ This guide assume to have you running v4.0+.
 
 =head4 Add Test::Chado as dependencies
 
-Since web applications are generally not meant to packaged and/or distributable, here a L<cpanfile> is created for declaring dependencies.
+Since web applications are generally not meant to packaged and/or distributable, a L<cpanfile> is used for declaring dependencies.
 Save the below as cpanfile inside the project folder
 
     requires 'Mojolicious', '4.0';
@@ -47,5 +47,5 @@ Save the below as cpanfile inside the project folder
 
 Install Test::Chado
 
-    cpanm Test::Chado
+    cpanm .
 
