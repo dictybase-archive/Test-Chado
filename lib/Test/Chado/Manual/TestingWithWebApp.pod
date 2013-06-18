@@ -14,25 +14,11 @@ Here an example is given with L<Mojolicious> framework for better understanding 
 
 This guide assume to have you running v4.0+.
 
-=head4 Create application
+=head4 Create project folder
+    
+    mkdir -p test_chado_with_mojo/t
 
-     mojo generate app TestChadoWithMojo                                                                                                                                 rbenv:system 
-        [mkdir] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/script
-        [write] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/script/test_chado_with_mojo
-        [chmod] test_chado_with_mojo/script/test_chado_with_mojo 744
-        [mkdir] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/lib
-        [write] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/lib/TestChadoWithMojo.pm
-        [mkdir] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/lib/TestChadoWithMojo
-        [write] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/lib/TestChadoWithMojo/Example.pm
-        [mkdir] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/t
-        [write] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/t/basic.t
-        [mkdir] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/log
-        [mkdir] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/public
-        [write] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/public/index.html
-        [mkdir] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/templates/layouts
-        [write] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/templates/layouts/default.html.ep
-        [mkdir] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/templates/example
-        [write] /home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/templates/example/welcome.html.ep
+The B<t> folder will contain the test file.
 
 =head4 Add Test::Chado as dependencies
 
@@ -40,7 +26,6 @@ Since web applications are generally not meant to packaged and/or distributable,
 Save the below as cpanfile inside the project folder
 
     requires 'Mojolicious', '4.0';
-    requires 'Mojolicious::Plugin::Database', '1.08';
     on 'test' => sub {
         requires 'Test::Chado', '1.0.0';
     };
@@ -48,4 +33,106 @@ Save the below as cpanfile inside the project folder
 Install Test::Chado
 
     cpanm .
+
+=head4 Create application
+
+Create a L<Mojolicious::Lite> application in a file B<app.pl>. First, we are going to create routes for creating and accession cvterms.
+
+
+    use Mojolicious::Lite;
+    use Mojo::Base -base;
+    use Bio::Chado::Schema;
+    use FindBin qw($Bin);
+    use File::Spec::Functions;
+
+    app->attr(
+        schema => sub {
+            my $dbname = catfile( $Bin, "db", "chado.sqlite" );
+                    return Bio::Chado::Schema->connect( "dbi:SQLite:dbname=$dbname", "", "" );
+        }
+    );
+
+
+    post '/cvterms' => [ format => [qw/json/] ] => sub {
+        my $self   = shift;
+        my $params = $self->req->json;
+        for my $p (qw/namespace id name/) {
+            if ( not defined $params->{$p} ) {
+                $self->res->message("Required parameter $p missing");
+                $self->rendered(400);
+                return;
+            }
+        }
+        my ( $db, $id ) = split /:/, $params->{id};
+        my $schema     = app->schema;
+        my $cvterm_row = $schema->resultset('Cvterm')->create(
+            {   name  => $params->{name},
+                cv_id => $schema->resultset('Cv')
+                    ->find_or_create( { name => $params->{namespace} } )->cv_id,
+                dbxref => {
+                    accession => $id,
+                    db_id     => $schema->resultset('Db')
+                        ->find_or_create( { name => $db } )->db_id
+                }
+            }
+        );
+
+        $self->res->headers->location( "/cvterms/" . $params->{id} . ".json" );
+        $self->rendered(201);
+    };
+
+    $app->start;
+
+During the unit testing, the B<schema> attribute will hold the L<Test::Chado> schema and pass it along to the B<post> route.
+
+Now, write a unit test file(basic.t) inside the B<t/> folder.
+
+    use Test::More qw/no_plan/;
+    use Test::Mojo;
+    use Test::Chado;
+    use Test::Chado::Common;
+    use Module::Load;
+    use FindBin qw($Bin);
+
+    load "$Bin/../app.pl";
+
+    my $schema = chado_schema( load_fixture => 1 );
+    my $t = Test::Mojo->new;
+    $t->app->schema($schema);
+
+    my $post = $t->post_ok(
+        '/cvterms.json' => json => {
+            namespace => 'test-chado-mojoapp',
+            id        => 'TC:000001',
+            name      => 'test chado rocks'
+        },
+        "it should post the new cvterm"
+    );
+    $post->status_is( 201, "should get the correct response" );
+    $post->header_is(
+        Location => "/cvterms/TC:000001.json",
+        "should get the correct HTTP location header"
+    );
+    has_cvterm( $schema, "test chado rocks", "should have the new cvterm" );
+    has_dbxref( $schema, "000001", "should have the new dbxref" );
+
+Run it 
+
+    perl app.pl test
+
+    Running tests from '/home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/t'.
+    t/basic.t .. 
+    ok 1 - POST /cvterms.json
+    ok 2 - should get the correct response
+    ok 3 - should get the correct HTTP location header
+    ok 4 - should have the new cvterm
+    ok 5 - should have the new dbxref
+    1..5
+    ok
+    All tests successful.
+    Files=1, Tests=5,  6 wallclock secs ( 0.02 usr  0.00 sys +  5.74 cusr  0.26 csys =  6.02 CPU)
+    Result: PASS
+
+
+
 
