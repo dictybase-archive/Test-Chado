@@ -1,6 +1,7 @@
 requires "Bio::Chado::Schema" => "0.20000";
 requires "DBD::SQLite" => "1.37";
 requires "DBIx::Class::Fixtures" => "1.001018";
+requires "Data::Random" => "0.08";
 requires "File::Path" => "2.08";
 requires "File::ShareDir" => "1.02";
 requires "Graph" => "0.94";

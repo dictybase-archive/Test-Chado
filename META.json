@@ -34,6 +34,7 @@
             "Bio::Chado::Schema" : "0.20000",
             "DBD::SQLite" : "1.37",
             "DBIx::Class::Fixtures" : "1.001018",
+            "Data::Random" : "0.08",
             "File::Path" : "2.08",
             "File::ShareDir" : "1.02",
             "Graph" : "0.94",

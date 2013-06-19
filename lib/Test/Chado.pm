@@ -121,21 +121,6 @@ sub get_fixture_loader {
 
 # ABSTRACT: Unit testing for chado database modules and applications
 
-=head1 Build Status
-
-=begin HTML
-
-<a href='https://travis-ci.org/dictyBase/Test-Chado'>
-  <img src='https://travis-ci.org/dictyBase/Test-Chado.png?branch=develop'
-  alt='Travis CI status'/></a>
-
-<a href='https://coveralls.io/r/dictyBase/Test-Chado'><img
-src='https://coveralls.io/repos/dictyBase/Test-Chado/badge.png?branch=develop'
-alt='Coverage Status' /></a>
-
-
-=end HTML
-
 
 =head1 SYNOPSIS
 
@@ -145,7 +130,9 @@ This means you have a module with namespace(with or without double colons), alon
 B<lib/> folder and going to write tests in B<t/> folder.
 This could an existing or new module, anything would work.
 
-=head4 Now write tests in your .t file(t/dbtest.t for example)
+=head4 Write tests 
+
+It should be in your .t file(t/dbtest.t for example)
   
   use Test::More;
   use Test::Chado;
@@ -191,50 +178,54 @@ This could an existing or new module, anything would work.
 
 Use the B<quick start> or pick any of the section below to start your testing. All the source code for this documentation is also available L<here|https://github.com/dictyBase/Test-Chado-Guides>.
 
-=head3 L<Test::Chado::Manual::QuickStart> - Quick start for using B<Test::Chado>
+=over
 
-=head3 L<Test::Chado::Manual::TestingWithDistribution> - How to test perl module with B<Test::Chado>
+=item L<Quick start|Test::Chado::Manual::QuickStart.pod> 
 
-=head3 L<Test::Chado::Manual::TestingWithWebApp> - How to test web applications with B<Test::Chado>
+=item L<Testing perl distribution|Test::Chado::Manual::TestingWithDistribution.pod> 
 
-=head3 L<Test::Chado::Manual::TestingWithPostgres> - How to test with B<Postgresql> backends.
+=item L<Testing web application|Test::Chado::Manual::TestingWithWebApp.pod> 
 
-=head3 L<Test::Chado::Manual::TestingWithCustomSchema> - Loading custom schema(sql statements) during testing with B<Test::Chado>
+=item L<Testing with postgresql|Test::Chado::Manual::TestingWithPostgres> 
 
-=head3 L<Test::Chado::Manual::TestingWithCustomFixtures> - Loading custom fixtures(data) during testing.
+=item L<Loading custom schema for tesing|Test::Chado::Manual::TestingWithCustomSchema> 
+
+=item L<Loading custom fixtures|Test::Chado::Manual::TestingWithCustomFixtures> 
+
+=back
 
 
 =head1 API
 
-=head2 Attributes
+=head3 Attributes
 
 =over
 
-=item dbmanager_instance
+=item B<dbmanager_instance>
 
 Instance of a backend manager that implements L<Test::Chado::Role::HasDBManager> role, currently either of Sqlite or Pg backend will be available.
 
-=item is_schema_loaded
+=item B<is_schema_loaded>
 
 Flag to check the loading status of chado schema
 
-=item fixture_loader_instance 
+=item B<fixture_loader_instance>
 
 Insatnce of L<Test::Chado::FixtureLoader::Preset> by default.
 
-=item fixture_loader
+=item B<fixture_loader>
 
 Type of fixture loader, could be either of B<preset> and flatfile. By default it is B<preset>
 
 =back
 
-=head2 Methods
+=head3 Methods
 
 All the methods are available as exported subroutines by default
 
 =over
 
-=item chado_schema(%options)
+=item B<chado_schema(%options)>
 
 Return an instance of DBIx::Class::Schema for chado database.
 
@@ -242,7 +233,7 @@ However, because of the way the backends works, for Sqlite it returns a on the f
 
 =over
 
-=item options
+=item B<options>
 
 B<load_fixture> : Pass a true value(1) to load the default fixture
 
@@ -252,9 +243,9 @@ B<load_fixture> : Pass a true value(1) to load the default fixture
 
 =over
 
-=item drop_schema
+=item B<drop_schema>
 
-=item reload_schema
+=item B<reload_schema>
 
 Drops and then reloads the schema.
 
@@ -264,4 +255,19 @@ Sets the type of fixture loader backend it should use, either of B<preset> or B<
 
 =back
 
+
+=head1 Build Status
+
+=begin HTML
+
+<a href='https://travis-ci.org/dictyBase/Test-Chado'>
+  <img src='https://travis-ci.org/dictyBase/Test-Chado.png?branch=develop'
+  alt='Travis CI status'/></a>
+
+<a href='https://coveralls.io/r/dictyBase/Test-Chado'><img
+src='https://coveralls.io/repos/dictyBase/Test-Chado/badge.png?branch=develop'
+alt='Coverage Status' /></a>
+
+
+=end HTML
 
