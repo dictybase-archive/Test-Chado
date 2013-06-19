@@ -189,7 +189,7 @@ This could an existing or new module, anything would work.
 
 =head1 DOCUMENTATION
 
-Use the B<quick start> or pick any of the section below to start your testing. 
+Use the B<quick start> or pick any of the section below to start your testing. All the source code for this documentation is also available L<here|https://github.com/dictyBase/Test-Chado-Guides>.
 
 =head3 L<Test::Chado::Manual::QuickStart> - Quick start for using B<Test::Chado>
 

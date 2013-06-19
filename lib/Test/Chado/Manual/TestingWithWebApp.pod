@@ -134,5 +134,175 @@ Run it
     Result: PASS
 
 
+Now add a B<GET> route and mojolicious test for it
+B<In app.pl>
 
 
+    get '/cvterms/:id' => [ format => [qw/json/] ] => sub {
+        my $self   = shift;
+        my $schema = app->schema;
+        my ( $db, $id ) = split /:/, $self->stash('id');
+        my $row = $schema->resultset('Dbxref')
+            ->search( { accession => $id }, { rows => 1 } )->single;
+        if ( !$row ) {
+            $self->rendered(401);
+            return;
+        }
+        $self->render(
+            json => {
+                name => $row->cvterm->name,
+                id   => $self->stash("id")
+            }
+        );
+    };
+
+B<In basic.t>
+
+    $t->get_ok("/cvterms/TC:000001.json")->status_is(200)
+        ->json_is( { name => "test chado rocks", id => "TC:000001" },
+            "should get correct name and id" );
+
+    perl app.pl test -v
+
+    Running tests from '/home/cybersiddhu/Projects/Experiments/test_chado_with_mojo/t'.
+    t/basic.t .. 
+    ok 1 - POST /cvterms.json
+    ok 2 - should get the correct response
+    ok 3 - should get the correct HTTP location header
+    ok 4 - should have the new cvterm
+    ok 5 - should have the new dbxref
+    ok 6 - GET /cvterms/TC:000001.json
+    ok 7 - 200 OK
+    ok 8 - should get correct name and id
+    1..8
+    ok
+    All tests successful.
+    Files=1, Tests=8,  6 wallclock secs ( 0.02 usr  0.01 sys +  5.82 cusr  0.27 csys =  6.12 CPU)
+    Result: PASS
+
+
+Now, add few more tests for chado B<feature> and B<featureloc> tables entry
+In B<app.pl>
+
+
+    post 'features' => [ format => [qw/json/] ] => sub {
+        my $self   = shift;
+        my $schema = app->schema;
+        my $params = $self->req->json;
+        for my $p (qw/name organism type/) {
+            if ( not defined $params->{$p} ) {
+                $self->res->message("Required parameter $p missing");
+                $self->rendered(400);
+                return;
+            }
+        }
+
+        my $org_row
+            = $schema->resultset('Organism')
+            ->search( { common_name => $params->{organism} }, { rows => 1 } )
+            ->single;
+        my $feat_row = $schema->resultset('Feature')->create(
+            {   name       => $params->{name},
+                uniquename => $params->{name},
+                type_id    => $schema->resultset('Cvterm')
+                    ->find( { name => $params->{type} } )->cvterm_id,
+                organism_id => $org_row->organism_id
+            }
+        );
+        if ( defined $params->{start} and defined $params->{end} ) {
+            $feat_row->create_related( 'featureloc_features',
+                { fmin => $params->{start}, fmax => $params->{end} } );
+        }
+        $self->res->headers->location( "/features/" . $params->{name} . ".json" );
+        $self->rendered(201);
+
+    };
+
+In B<app.pl>, we have added a HTTP I<POST> route B<features> which creates an entry in feature table and add a featureloc if the values are provided.
+Now in B<basic.t>, add few tests for this piece of code
+
+
+    my $post2 = $t->post_ok(
+        '/features.json' => json => {
+            name     => 'tcpl',
+            type     => 'gene',
+            organism => 'human'
+        },
+        "it should post the new feature"
+    );
+    $post2->status_is( 201, "should get the correct response" );
+    $post2->header_is(
+        Location => "/features/tcpl.json",
+        "should get the correct HTTP location header"
+    );
+    has_feature( $schema, 'tcpl', 'should have the new feature in database' );
+
+    perl app.pl test -v
+    
+    ok 1 - POST /cvterms.json
+    ok 2 - should get the correct response
+    ok 3 - should get the correct HTTP location header
+    ok 4 - should have the new cvterm
+    ok 5 - should have the new dbxref
+    ok 6 - GET /cvterms/TC:000001.json
+    ok 7 - 200 OK
+    ok 8 - should get correct name and id
+    ok 9 - POST /features.json
+    ok 10 - should get the correct response
+    ok 11 - should get the correct HTTP location header
+    ok 12 - should have the new feature in database
+    1..12
+    ok
+    All tests successful.
+    Files=1, Tests=12,  6 wallclock secs ( 0.02 usr  0.00 sys +  5.81 cusr  0.18 csys =  6.01 CPU)
+    Result: PASS
+
+Now test another feature with feature location. Append the following in B<basic.t>
+
+    my $post3 = $t->post_ok(
+        '/features.json' => json => {
+            name     => 'panda',
+            type     => 'contig',
+            organism => 'human',
+            start    => 48,
+            end      => 500
+        },
+        "it should post the new feature with featureloc"
+    );
+    $post3->status_is( 201, "should get the correct response" );
+    $post3->header_is(
+        Location => "/features/panda.json",
+        "should get the correct HTTP location header"
+    );
+    has_feature( $schema, 'panda', 'should have the new feature in database' );
+    has_featureloc( $schema, 'panda',
+        'should have the new feature with location in database' );
+        
+    perl app.pl test -v
+
+
+    ok 1 - POST /cvterms.json
+    ok 2 - should get the correct response
+    ok 3 - should get the correct HTTP location header
+    ok 3 - should get the correct HTTP location header
+    ok 4 - should have the new cvterm
+    ok 5 - should have the new dbxref
+    ok 6 - GET /cvterms/TC:000001.json
+    ok 7 - 200 OK
+    ok 8 - should get correct name and id
+    ok 9 - POST /features.json
+    ok 10 - should get the correct response
+    ok 11 - should get the correct HTTP location header
+    ok 12 - should have the new feature in database
+    ok 13 - POST /features.json
+    ok 14 - should get the correct response
+    ok 15 - should get the correct HTTP location header
+    ok 16 - should have the new feature in database
+    ok 17 - should have the new feature with location in database
+    1..17
+    ok
+    All tests successful.
+    Files=1, Tests=17,  6 wallclock secs ( 0.02 usr  0.01 sys +  5.86 cusr  0.16 csys =  6.05 CPU)
+    Result: PASS
+
+That's all folks!
