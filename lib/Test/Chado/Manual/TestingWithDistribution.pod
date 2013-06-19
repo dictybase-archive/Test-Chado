@@ -22,20 +22,20 @@ Minimally, it should have a B<lib> and B<t> folders. For a new distribution, cre
 The distribution will look like the following ...
 
     TestChado-WithMakeFile
-    ├── Changes
-    ├── ignore.txt
-    ├── lib
-    │   └── TestChado
-    │       └── WithMakeFile.pm
-    ├── Makefile.PL
-    ├── MANIFEST
-    ├── README
-    └── t
-        ├── 00-load.t
-        ├── boilerplate.t
-        ├── manifest.t
-        ├── pod-coverage.t
-        └── pod.t
+    |-- Changes
+    |--ignore.txt
+    |-- lib
+    |   |-- TestChado
+    │       |-- WithMakeFile.pm
+    |-- Makefile.PL
+    |-- MANIFEST
+    |-- README
+    |-- t
+        |-- 00-load.t
+        |-- boilerplate.t
+        |-- manifest.t
+        |-- pod-coverage.t
+        |-- pod.t
 
 
 =head3 Using with Makefile.PL distribution

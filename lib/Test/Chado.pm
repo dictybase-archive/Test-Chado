@@ -124,13 +124,13 @@ sub get_fixture_loader {
 
 =head1 SYNOPSIS
 
-=head4 Start with a perl module
+=head3 Start with a perl module
 
 This means you have a module with namespace(with or without double colons), along with B<Makefile.PL> or B<Build.PL> or even B<dist.ini>. You have your libraries in
 B<lib/> folder and going to write tests in B<t/> folder.
 This could an existing or new module, anything would work.
 
-=head4 Write tests 
+=head3 Write tests 
 
 It should be in your .t file(t/dbtest.t for example)
   
@@ -147,7 +147,7 @@ It should be in your .t file(t/dbtest.t for example)
 
   drop_schema();
 
-=head4 Run any test commands to test it against chado sqlite
+=head3 Run any test commands to test it against chado sqlite
 
   prove -lv t/dbtest.t
 
@@ -155,7 +155,7 @@ It should be in your .t file(t/dbtest.t for example)
 
   make test
 
-=head4 Run against postgresql
+=head3 Run against postgresql
 
   #Make sure you have a database with enough permissions
   
@@ -165,7 +165,7 @@ It should be in your .t file(t/dbtest.t for example)
 
   make test  --dsn "dbi:Pg:dbname=testchado;host=localhost"  --user tucker --password halo
 
-=head4 Run against postgresql without setting any custom server
+=head3 Run against postgresql without setting any custom server
 
   prove -l --postgression t/dbtest.t
 
@@ -188,9 +188,9 @@ Use the B<quick start> or pick any of the section below to start your testing. A
 
 =item L<Testing with postgresql|Test::Chado::Manual::TestingWithPostgres> 
 
-=item L<Loading custom schema for tesing|Test::Chado::Manual::TestingWithCustomSchema> 
+=item L<Loading custom schema(sql statements) for testing|Test::Chado::Manual::TestingWithCustomSchema> 
 
-=item L<Loading custom fixtures|Test::Chado::Manual::TestingWithCustomFixtures> 
+=item L<Loading custom fixtures(test data)|Test::Chado::Manual::TestingWithCustomFixtures> 
 
 =back
 
