@@ -6,21 +6,19 @@ use Test::Chado::FixtureLoader::Flatfile;
 use File::ShareDir qw/module_dir/;
 use File::Spec::Functions;
 
-
 SKIP: {
     skip 'Environment variable TC_DSN is not set',
         if not defined $ENV{TC_DSN};
     eval { require DBD::Pg };
     skip 'DBD::Pg is needed to run this test' if $@;
 
-    my $dbmanager = Test::Chado::DBManager::Pg->new(
-        dsn      => $ENV{TC_DSN},
-        user     => $ENV{TC_USER},
-        password => $ENV{TC_PASSWORD}
-    );
-
     subtest 'loading organism fixture from flatfile' => sub {
-        $dbmanager->drop_schema;
+        my $dbmanager = Test::Chado::DBManager::Pg->new(
+            dsn      => $ENV{TC_DSN},
+            user     => $ENV{TC_USER},
+            password => $ENV{TC_PASSWORD}
+        );
+
         $dbmanager->deploy_schema;
 
         my $loader = Test::Chado::FixtureLoader::Flatfile->new(
@@ -53,6 +51,11 @@ SKIP: {
 
     subtest 'loading relation ontology fixture from flatfile' => sub {
 
+        my $dbmanager = Test::Chado::DBManager::Pg->new(
+            dsn      => $ENV{TC_DSN},
+            user     => $ENV{TC_USER},
+            password => $ENV{TC_PASSWORD}
+        );
         $dbmanager->deploy_schema;
         my $loader = Test::Chado::FixtureLoader::Flatfile->new(
             dbmanager => $dbmanager );
@@ -95,6 +98,11 @@ SQL
 
     subtest 'loading sequence ontology fixture from flatfile' => sub {
 
+        my $dbmanager = Test::Chado::DBManager::Pg->new(
+            dsn      => $ENV{TC_DSN},
+            user     => $ENV{TC_USER},
+            password => $ENV{TC_PASSWORD}
+        );
         $dbmanager->deploy_schema;
         my $loader = Test::Chado::FixtureLoader::Flatfile->new(
             dbmanager => $dbmanager );
@@ -137,6 +145,11 @@ SQL
 
     subtest 'loading all fixtures from flatfile' => sub {
 
+        my $dbmanager = Test::Chado::DBManager::Pg->new(
+            dsn      => $ENV{TC_DSN},
+            user     => $ENV{TC_USER},
+            password => $ENV{TC_PASSWORD}
+        );
         $dbmanager->deploy_schema;
         my $loader = Test::Chado::FixtureLoader::Flatfile->new(
             dbmanager => $dbmanager );
@@ -175,6 +188,12 @@ SQL
     };
 
     subtest 'loading arbitary ontology fixture from flatfile' => sub {
+
+        my $dbmanager = Test::Chado::DBManager::Pg->new(
+            dsn      => $ENV{TC_DSN},
+            user     => $ENV{TC_USER},
+            password => $ENV{TC_PASSWORD}
+        );
 
         $dbmanager->deploy_schema;
         my $loader = Test::Chado::FixtureLoader::Flatfile->new(

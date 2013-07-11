@@ -398,3 +398,91 @@ sub create_more_dbxref {
 with 'Test::Chado::Role::Helper::WithBcs';
 
 1;
+
+
+=head1 NAME
+
+Class to manage loading of test fixture from flatfile
+
+=head1 SYNOPSIS
+
+use Test::Chado::FixtureLoader::Flatfile;
+use Test::Chado::Factory::FixtureLoader;
+
+my $sqlite = Test::Chado::Factory::FixtureLoader->get_instance('sqlite');
+my  $loader = Test::Chado::FixtureLoader::Flatfile->new(dbmanager => $sqlite);
+$sqlite->load_fixtures;
+
+
+=head1 DESCRIPTION
+
+This class primarilly provides a method B<load_fixtures> to load all the default fixtures that comes bundled with distribution.
+
+=head2 Default fixtures
+
+=head3 Organisms entries
+
+It's a B<YAML> version of organism entries found in the B<initialize.sql> file of official chado distribution.
+
+=head3 Sequence ontology feature annotation (SOFA)
+
+The lite L<version|http://www.sequenceontology.org/resources/intro.html> of sequence ontology. 
+
+=head3 Relation ontology
+
+Obtained from L<here|http://code.google.com/p/obo-relations/>
+
+
+=head1 API
+
+=head2 Attributes
+
+These are public attributes defined exclusively in this class. For rest of the consumed attributes look at L<Test::Chado::Role::Helper::WithBcs>
+
+=over
+
+=item obo_xml
+
+Name of obo xml file
+
+=item obo_xml_loader
+
+Instance of <XML::Twig> with two handlers, one to load the term and other for relations
+
+=item graph
+
+Instance of L<Graph>
+
+=item traverse_graph
+
+Instance of L<Graph::Traversal>
+
+=item ontology_namespace
+
+
+=back
+
+
+=head2 Methods
+
+Other than the exclusive methods below, look at the role L<Test::Chado::Role::Helper::WithBcs>
+
+=over
+
+=item load_fixtures
+
+Loads all default fixtures from flatfiles.
+
+=item load_organism
+
+Loads organism fixtures from B<organism.yaml> file
+
+=load_rel
+
+Loads relationship ontology from relationship.obo_xml
+
+=load_so
+
+Loads sequence ontology(SO) from sofa.obo_xml file
+
+=back

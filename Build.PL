@@ -12,7 +12,7 @@ my %module_build_args = (
   "configure_requires" => {
     "Module::Build" => "0.3601"
   },
-  "dist_abstract" => "Build,configure and test chado database backed modules and applications",
+  "dist_abstract" => "Unit testing for chado database modules and applications",
   "dist_author" => [
     "Siddhartha Basu <biosidd\@gmail.com>"
   ],
@@ -26,6 +26,7 @@ my %module_build_args = (
     "Bio::Chado::Schema" => "0.20000",
     "DBD::SQLite" => "1.37",
     "DBIx::Class::Fixtures" => "1.001018",
+    "Data::Random" => "0.08",
     "File::Path" => "2.08",
     "File::ShareDir" => "1.02",
     "Graph" => "0.94",

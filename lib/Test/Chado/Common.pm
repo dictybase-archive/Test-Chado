@@ -141,3 +141,34 @@ sub _has_featureloc {
 }
 
 1;
+
+
+=head1 API
+
+=head2 Methods
+
+=over
+
+=item
+
+All methods are available as exported subroutines by default
+
+=item
+
+All methods accept the same parameter pattern. The first two are required.
+
+=back
+
+=over
+
+=item has_cv(L<DBIx::Class::Schema>, cv name, [description])
+
+=item has_feature(L<DBIx::Class::Schema>, feature name, [description])
+
+=item has_dbxref(L<DBIx::Class::Schema>, dbxref, [description])
+
+=item has_cvterm(L<DBIx::Class::Schema>, cvterm name, [description])
+
+=item has_featureloc(L<DBIx::Class::Schema>, feature name, [description])
+
+=back

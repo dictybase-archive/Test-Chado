@@ -1,7 +1,8 @@
+use strict;
 use Test::More qw/no_plan/;
 use Test::Exception;
-use IPC::Cmd qw/can_run/;
 use Test::DatabaseRow;
+use SQL::Abstract;
 
 use_ok('Test::Chado::DBManager::Pg');
 my $pg = new_ok 'Test::Chado::DBManager::Pg';
@@ -15,21 +16,36 @@ SKIP: {
     $pg->dsn( $ENV{TC_DSN} );
     $pg->user( $ENV{TC_USER} );
     $pg->password( $ENV{TC_PASSWORD} );
+
     local $Test::DatabaseRow::dbh = $pg->dbh;
+    my $sqla = SQL::Abstract->new;
 
     subtest 'custom pg backend with DBI' => sub {
 
+        my $namespace = $pg->schema_namespace;
+        like( $namespace, qr/^\w+$/,
+            'should match an alphanumeric namespace' );
+
         lives_ok { $pg->deploy_by_dbi } 'should deploy with dbi';
-        $sql = <<'SQL';
-               SELECT reltype FROM pg_class where 
-                 relnamespace = (SELECT oid FROM 
-                 pg_namespace where nspname = 'public')
-                 and relname IN('feature', 'dbxref', 'cvterm')
-SQL
         row_ok(
-            sql         => $sql,
-            results     => 3,
-            description => 'should have three existing table'
+            table       => "information_schema.tables",
+            where       => [ "table_schema" => $namespace ],
+            results     => 173,
+            description => 'should have all existing tables'
+        );
+
+        row_ok(
+            sql => [
+                $sqla->select(
+                    'information_schema.tables',
+                    "*",
+                    {   "table_schema" => $namespace,
+                        "table_name" => { -in => [qw/db feature cv cvterm/] }
+                    }
+                )
+            ],
+            results     => 4,
+            description => 'should have all four tables'
         );
         lives_ok { $pg->drop_schema } "should drop the schema";
     };
@@ -38,16 +54,28 @@ SQL
         lives_ok { $pg->deploy_schema } 'should deploy';
         lives_ok { $pg->reset_schema } 'should reset the schema';
 
-        $sql = <<'SQL';
-               SELECT reltype FROM pg_class where 
-                 relnamespace = (SELECT oid FROM 
-                 pg_namespace where nspname = 'public')
-                 and relname IN('feature', 'dbxref', 'cvterm', 'cv')
-SQL
+        my $namespace = $pg->schema_namespace;
+
         row_ok(
-            sql         => $sql,
-            results     => 4,
-            description => 'should have three existing table'
+            table       => "information_schema.tables",
+            where       => [ "table_schema" => $namespace ],
+            results     => 173,
+            description => 'should have all existing tables'
+        );
+
+        row_ok(
+            sql => [
+                $sqla->select(
+                    'information_schema.tables',
+                    "*",
+                    {   "table_schema" => $namespace,
+                        "table_name" =>
+                            { -in => [qw/db feature cv cvterm dbxref/] }
+                    }
+                )
+            ],
+            results     => 5,
+            description => 'should have all four tables'
         );
         lives_ok { $pg->drop_schema } "should drop the schema";
 

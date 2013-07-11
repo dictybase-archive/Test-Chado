@@ -119,7 +119,142 @@ sub get_fixture_loader {
 
 1;
 
-# ABSTRACT: Fearless testing of  chado database backed modules and applications
+# ABSTRACT: Unit testing for chado database modules and applications
+
+
+=head1 SYNOPSIS
+
+=head3 Start with a perl module
+
+This means you have a module with namespace(with or without double colons), along with B<Makefile.PL> or B<Build.PL> or even B<dist.ini>. You have your libraries in
+B<lib/> folder and going to write tests in B<t/> folder.
+This could an existing or new module, anything would work.
+
+=head3 Write tests 
+
+It should be in your .t file(t/dbtest.t for example)
+  
+  use Test::More;
+  use Test::Chado;
+  use Test::Chado::Common;
+
+  my $schema = chado_schema(load_fixtures => 1);
+
+  has_cv($schema,'sequence', 'should have sequence ontology');
+  has_cvterm($schema, 'part_of', 'should have term part_of');
+  has_db($schema, 'SO', 'should have SO in db table');
+  has_dbxref($schema, '0000010', 'should have 0000010 in dbxref');
+
+  drop_schema();
+
+=head3 Run any test commands to test it against chado sqlite
+
+  prove -lv t/dbtest.t
+
+  ./Build test 
+
+  make test
+
+=head3 Run against postgresql
+
+  #Make sure you have a database with enough permissions
+  
+  prove -l --dsn "dbi:Pg:dbname=testchado;host=localhost"  --user tucker --password halo t/dbtest.t
+
+  ./Build test --dsn "dbi:Pg:dbname=testchado;host=localhost"  --user tucker --password halo
+
+  make test  --dsn "dbi:Pg:dbname=testchado;host=localhost"  --user tucker --password halo
+
+=head3 Run against postgresql without setting any custom server
+
+  prove -l --postgression t/dbtest.t
+
+  ./Build test --postgression
+
+  make test --postgression
+
+
+=head1 DOCUMENTATION
+
+Use the B<quick start> or pick any of the section below to start your testing. All the source code for this documentation is also available L<here|https://github.com/dictyBase/Test-Chado-Guides>.
+
+=over
+
+=item L<Quick start|Test::Chado::Manual::QuickStart.pod> 
+
+=item L<Testing perl distribution|Test::Chado::Manual::TestingWithDistribution.pod> 
+
+=item L<Testing web application|Test::Chado::Manual::TestingWithWebApp.pod> 
+
+=item L<Testing with postgresql|Test::Chado::Manual::TestingWithPostgres> 
+
+=item L<Loading custom schema(sql statements) for testing|Test::Chado::Manual::TestingWithCustomSchema> 
+
+=item L<Loading custom fixtures(test data)|Test::Chado::Manual::TestingWithCustomFixtures> 
+
+=back
+
+
+=head1 API
+
+=head3 Attributes
+
+=over
+
+=item B<dbmanager_instance>
+
+Instance of a backend manager that implements L<Test::Chado::Role::HasDBManager> role, currently either of Sqlite or Pg backend will be available.
+
+=item B<is_schema_loaded>
+
+Flag to check the loading status of chado schema
+
+=item B<fixture_loader_instance>
+
+Insatnce of L<Test::Chado::FixtureLoader::Preset> by default.
+
+=item B<fixture_loader>
+
+Type of fixture loader, could be either of B<preset> and flatfile. By default it is B<preset>
+
+=back
+
+=head3 Methods
+
+All the methods are available as exported subroutines by default
+
+=over
+
+=item B<chado_schema(%options)>
+
+Return an instance of DBIx::Class::Schema for chado database.
+
+However, because of the way the backends works, for Sqlite it returns a on the fly schema generated from L<DBIx::Class::Schema::Loader>, whereas for B<Pg> backend it returns L<Bio::Chado::Schema>
+
+=over
+
+=item B<options>
+
+B<load_fixture> : Pass a true value(1) to load the default fixture
+
+=back
+
+=back
+
+=over
+
+=item B<drop_schema>
+
+=item B<reload_schema>
+
+Drops and then reloads the schema.
+
+=item set_fixture_loader
+
+Sets the type of fixture loader backend it should use, either of B<preset> or B<flatfile>.
+
+=back
+
 
 =head1 Build Status
 
@@ -135,70 +270,4 @@ alt='Coverage Status' /></a>
 
 
 =end HTML
-
-
-=head1 SYNOPSIS
-
-
-=head1 DESCRIPTION
-
-
-=head1 API
-
-=head2 Attributes
-
-=over
-
-=item dbmanager_instance
-
-Instance of a backend manager that implements L<Test::Chado::Role::HasDBManager> role, currently either of Sqlite or Pg backend will be available.
-
-=item is_schema_loaded
-
-Flag to check the loading status of chado schema
-
-=item fixture_loader_instance 
-
-Insatnce of L<Test::Chado::FixtureLoader::Preset> by default.
-
-=item fixture_loader
-
-Type of fixture loader, could be either of B<preset> and flatfile. By default it is B<preset>
-
-=back
-
-=head2 Methods
-
-All the methods are available as exported subroutines by default
-
-=over
-
-=item chado_schema(%options)
-
-Return an instance of DBIx::Class::Schema for chado database.
-
-However, because of the way the backends works, for Sqlite it returns a on the fly schema generated from L<DBIx::Class::Schema::Loader>, whereas for B<Pg> backend it returns L<Bio::Chado::Schema>
-
-=over
-
-=item options
-
-B<load_fixture> : Pass a true value(1) to load the default fixture
-
-=back
-
-=back
-
-=item drop_schema
-
-=item reload_schema
-
-Drops and then reloads the schema.
-
-=item set_fixture_loader
-
-Sets the type of fixture loader backend it should use, either of B<preset> or B<flatfile>.
-
-=back
-
 

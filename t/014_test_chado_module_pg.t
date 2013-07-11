@@ -3,6 +3,7 @@ use Test::Exception;
 use File::Temp qw/tmpnam/;
 use Test::DatabaseRow;
 use Module::Load qw/load/;
+use SQL::Abstract;
 
 SKIP: {
     skip 'Environment variable TC_DSN is not set',
@@ -14,9 +15,9 @@ SKIP: {
         "--dsn", $ENV{TC_DSN}, "--password", $ENV{TC_PASSWORD}, "--user",
         $ENV{TC_USER}
     );
-    load Test::Chado, ':default';
-    Test::Chado->get_fixture_loader->dbmanager->drop_schema;
+    my $sqla = SQL::Abstract->new;
 
+    load Test::Chado, ':default';
     subtest 'schema management with postgresql loader' => sub {
         my $schema;
         lives_ok { $schema = chado_schema() } 'should run chado_schema';
@@ -24,22 +25,35 @@ SKIP: {
 
         local $Test::DatabaseRow::dbh
             = Test::Chado->get_fixture_loader->dbmanager->dbh;
+        my $namespace
+            = Test::Chado->get_fixture_loader->dbmanager->schema_namespace;
 
-        my $sql = <<'SQL';
-               SELECT reltype FROM pg_class where 
-                 relnamespace = (SELECT oid FROM 
-                 pg_namespace where nspname = 'public')
-                 and relname IN('feature', 'dbxref', 'cvterm')
-SQL
         row_ok(
-            sql         => $sql,
-            results     => 3,
-            description => 'should have three existing table'
+            sql => [
+                $sqla->select(
+                    'information_schema.tables',
+                    "*",
+                    {   "table_schema" => $namespace,
+                        "table_name" => { -in => [qw/db feature cv cvterm/] }
+                    }
+                )
+            ],
+            results     => 4,
+            description => 'should have all four tables'
         );
 
         lives_ok { drop_schema() } 'should run drop_schema';
+
         row_ok(
-            sql         => $sql,
+            sql => [
+                $sqla->select(
+                    'information_schema.tables',
+                    "*",
+                    {   "table_schema" => $namespace,
+                        "table_name" => { -in => [qw/db feature cv cvterm/] }
+                    }
+                )
+            ],
             results     => 0,
             description => 'should not have three existing table'
         );
@@ -58,20 +72,27 @@ SQL
 
         local $Test::DatabaseRow::dbh
             = Test::Chado->get_fixture_loader->dbmanager->dbh;
+        my $namespace
+            = Test::Chado->get_fixture_loader->dbmanager->schema_namespace;
 
-        my $sql = <<'SQL';
-               SELECT reltype FROM pg_class where 
-                 relnamespace = (SELECT oid FROM 
-                 pg_namespace where nspname = 'public')
-                 and relname IN('feature')
-SQL
         row_ok(
-            sql         => $sql,
-            results     => 1,
-            description => 'should have feature table after loading'
+            sql => [
+                $sqla->select(
+                    'information_schema.tables',
+                    "*",
+                    {   "table_schema" => $namespace,
+                        "table_name" => { -in => [qw/db feature cv cvterm/] }
+                    }
+                )
+            ],
+            results     => 4,
+            description => 'should have all four tables'
         );
-        is( $schema->resultset('Organism::Organism')->count( {} ),
-            0, 'should not have any fixture after reload' );
+        row_ok(
+            sql => "SELECT * FROM organism",
+            results => 0,
+            description => "should not have any fixture after reload"
+        );
 
     };
     Test::Chado->get_fixture_loader->dbmanager->drop_schema;

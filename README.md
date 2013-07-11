@@ -1,6 +1,6 @@
 # NAME
 
-Test::Chado - Build,configure and test chado database backed modules and applications
+Test::Chado - Unit testing for chado database modules and applications
 
 # VERSION
 
@@ -8,184 +8,109 @@ version 1.0.0
 
 # SYNOPSIS
 
-### Write build script(Build.PL) for your module or web application:
+#### Start with a perl module
 
-    use Module::Build::Chado;
+This means you have a module with namespace(with or without double colons), along with __Makefile.PL__ or __Build.PL__ or even __dist.ini__. You have your libraries in
+__lib/__ folder and going to write tests in __t/__ folder.
+This could an existing or new module, anything would work.
 
-    my $build = Module::Build::Chado->new(
-                  module_name => 'MyChadoApp', 
-                  license => 'perl', 
-                  dist_abstract => 'My chado module'
-                  dist_version => '1.0'
+#### Write tests 
 
-    );
+It should be in your .t file(t/dbtest.t for example)
 
-    $build->create_build_script;
+    use Test::More;
+    use Test::Chado;
+    use Test::Chado::Common;
 
-### Then from the command line:
+    my $schema = chado_schema(load_fixtures => 1);
 
-    perl Build.PL && ./Build test(default is a temporary SQLite database)
+    has_cv($schema,'sequence', 'should have sequence ontology');
+    has_cvterm($schema, 'part_of', 'should have term part_of');
+    has_db($schema, 'SO', 'should have SO in db table');
+    has_dbxref($schema, '0000010', 'should have 0000010 in dbxref');
 
-It will deploy chado schema in a SQLite database, load fixtures and run all tests)
+    drop_schema();
 
-### In each of the test file(.t) access the schema(Bio::Chado::Schema) object
+#### Run any test commands to test it against chado sqlite
 
-    use Module::Build::Chado;
+    prove -lv t/dbtest.t
 
-    my $schema = Module::Build::Chado->current->schema;
+    ./Build test 
 
-    #do something with it ....
+    make test
 
-    $schema->resultset('Organism::Organism')->....
+#### Run against postgresql
 
-### Use for other database backend
+    #Make sure you have a database with enough permissions
+    
 
-__PostgreSQL__
+    prove -l --dsn "dbi:Pg:dbname=testchado;host=localhost"  --user tucker --password halo t/dbtest.t
 
-    ./Build test --dsn "dbi:Pg:dbname=mychado" --user tucker --password booze
+    ./Build test --dsn "dbi:Pg:dbname=testchado;host=localhost"  --user tucker --password halo
 
-__Oracle__
+    make test  --dsn "dbi:Pg:dbname=testchado;host=localhost"  --user tucker --password halo
 
-    ./Build test --dsn "dbi:Oracle:sid=myoracle" --user tucker --password hammer
+#### Run against postgresql without setting any custom server
 
-# DESCRIPTION
+    prove -l --postgression t/dbtest.t
 
-This is subclass of [Module::Build](http://search.cpan.org/perldoc?Module::Build) to configure,  build and test
-[chado](http://gmod.org/wiki/Chado) database backed
-perl modules and applications. During the __/Build test__  testing phase it loads some
-default fixtures which can be accessed in every test(.t) file using standard
-[DBIx::Class](http://search.cpan.org/perldoc?DBIx::Class) API.
+    ./Build test --postgression
 
-## Default fixtures loaded
+    make test --postgression
 
-- List of organisms
+# DOCUMENTATION
 
-    Look at the organism.yaml in the shared folder
+Use the __quick start__ or pick any of the section below to start your testing. All the source code for this documentation is also available [here](https://github.com/dictyBase/Test-Chado-Guides).
 
-- Relationship ontology
+- [Quick start](#lib/Test/Chado/Manual/QuickStart.pod) 
+- [Testing perl distribution](#lib/Test/Chado/Manual/TestingWithDistribution.pod) 
+- [Testing web application](#lib/Test/Chado/Manual/TestingWithWebApp.pod) 
+- [Testing with postgresql ](http://search.cpan.org/perldoc?Test::Chado::Manual::TestingWithPostgres) 
+- [Loading custom schema for tesing ](http://search.cpan.org/perldoc?Test::Chado::Manual::TestingWithCustomSchema) 
+- [Loading custom fixtures ](http://search.cpan.org/perldoc?Test::Chado::Manual::TestingWithCustomFixtures) 
 
-    OBO relationship types, available here
-    [http://bioportal.bioontology.org/ontologies/1042](http://bioportal.bioontology.org/ontologies/1042). 
+# API
 
-- Sequence ontology
+### Attributes
 
-    Sequence types and features,  available here
-    [http://bioportal.bioontology.org/ontologies/1109](http://bioportal.bioontology.org/ontologies/1109)
+- __dbmanager\_instance__
 
-## Accessing fixtures data in test(.t) files
+    Instance of a backend manager that implements [Test::Chado::Role::HasDBManager](http://search.cpan.org/perldoc?Test::Chado::Role::HasDBManager) role, currently either of Sqlite or Pg backend will be available.
 
-- Get a [Bio::Chado::Schema](http://search.cpan.org/perldoc?Bio::Chado::Schema) aka [DBIx::Class](http://search.cpan.org/perldoc?DBIx::Class) object
+- __is\_schema\_loaded__
 
-    my $schema = Module::Build->current->schema;
+    Flag to check the loading status of chado schema
 
-    isa\_ok($schema, 'Bio::Chado::Schema');
+- __fixture\_loader\_instance__
 
-- Access them using [DBIx::Class](http://search.cpan.org/perldoc?DBIx::Class) API
+    Insatnce of [Test::Chado::FixtureLoader::Preset](http://search.cpan.org/perldoc?Test::Chado::FixtureLoader::Preset) by default.
 
-        my $row = $schema->resultset('Organism::Organism')->find({species => 'Homo',  genus =>
-      'sapiens'});
+- __fixture\_loader__
 
-        my $resultset = $schema->resultset('Organism::Organism')->search({});
+    Type of fixture loader, could be either of __preset__ and flatfile. By default it is __preset__
 
-        my $relonto = $schema->resultset('Cv::Cv')->find({'name' => 'relationship'});
+### Methods
 
-        my $seqonto = $schema->resultset('Cv::Cv')->find({'name' => 'sequence'});
+All the methods are available as exported subroutines by default
 
-        my $cvterm_rs = $seqonto->cvterms;
-        
+- __chado\_schema(%options)__
 
-        while(my $cvterm = $cvterm_rs->next) {
-          .....
-        }
+    Return an instance of DBIx::Class::Schema for chado database.
 
-        You probably will not be accessing them too often,  but mostly needed to load other test
-        fixtures.
+    However, because of the way the backends works, for Sqlite it returns a on the fly schema generated from [DBIx::Class::Schema::Loader](http://search.cpan.org/perldoc?DBIx::Class::Schema::Loader), whereas for __Pg__ backend it returns [Bio::Chado::Schema](http://search.cpan.org/perldoc?Bio::Chado::Schema)
 
-## Loading custom fixtures
+    - __options__
 
-- Create your own subclass and implement either or both of two methods
-__before\_all\_fixtures__ and __after\_all\_fixtures__
-    - before\_all\_fixtures
+        __load\_fixture__ : Pass a true value(1) to load the default fixture
 
-        This code will run before any fixture is loaded
+- __drop\_schema__
+- __reload\_schema__
 
-    - after\_all\_fixtures
+    Drops and then reloads the schema.
 
-        This code will run after organism data, relationship and sequence ontologies are loaded
+- set\_fixture\_loader
 
-        package MyBuilder;
-        use base qw/Module::Build::Chado/;
-
-        sub before_all_fixtures {
-           my ($self) = @_;
-        }
-
-        sub before_all_fixtures {
-           my ($self) = @_;
-        }
-- All the attributes and methods of __Module::Build__ and __Module::Build::Chado__ [API](http://search.cpan.org/perldoc?API)
-become available through _$self_.
-
-# ATTRIBUTES
-
-## schema
-
-A [Bio::Chado::Schema](http://search.cpan.org/perldoc?Bio::Chado::Schema) object.
-
-## dsn
-
-Database connect string,  defaults to a temporary SQLite database.
-
-## user
-
-Database user,  not needed for SQLite backend.
-
-## password
-
-Database password,  not needed for SQLite backend.
-
-## superuser
-
-Database super user, in case the regular use do not have enough permissions for
-manipulating the database schema. It defaults to the user attribute.
-
-## superpassword
-
-Similar concept as superuser
-
-## ddl
-
-DDL file for particular backend,  by default comes for SQLite,  Postgresql and Oracle.
-
-## organism\_fixuture
-
-Fixture for loading organisms,  by default the distribution comes with a organism.yaml
-file.
-
-## rel\_fixuture
-
-Relation ontology file in obo\_xml format. The distribution includes a relationship.obo\_xml
-file.
-
-## so\_fixuture
-
-Sequence ontology file in obo\_xml format. By default,  it includes sofa.obo\_xml file.
-
-# METHODS
-
-## connect\_hash
-
-Returns a hash with the following connection specific keys ...
-
-- dsn
-- user
-- password
-- dbi\_attributes
-
-## connect\_info
-
-Returns an 4 elements array with connection arguments identical to [DBI](http://search.cpan.org/perldoc?DBI)'s __connect__
-method.
+    Sets the type of fixture loader backend it should use, either of __preset__ or __flatfile__.
 
 # Build Status
 
@@ -196,8 +121,6 @@ method.
 <a href='https://coveralls.io/r/dictyBase/Test-Chado'><img
 src='https://coveralls.io/repos/dictyBase/Test-Chado/badge.png?branch=develop'
 alt='Coverage Status' /></a>
-
-# API
 
 # AUTHOR
 

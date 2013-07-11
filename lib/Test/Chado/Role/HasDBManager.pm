@@ -108,68 +108,95 @@ sub reset_schema {
 
 1;
 
-# ABSTRACT: Moose role based interface to be consumed by backend specific classes for managing database
+=head1 SYNOPSIS
 
-=attr user
+package MyMooClass;
+with 'Test::Chado::Role::HasDBManager';
 
-=attr password
+B<Now implement all the required attributes given below>
 
-=attr dsn
+=head1 DESCRIPTION
 
-=attr database
+Moo role based interface to be consumed by backend specific classes for managing database
+
+=head1 API
+
+=head2 Needs implementation
+
+=over 
+
+=item database
 
 Database name. The method B<_build_database> should be B<implemented> by consuming class.
 
-=attr dbh
+=item dbh
 
 Database handler, a L<DBI> object. The method <_build_dbh> should be B<implemented> by consuming class.
 
-=attr driver
+=item driver
 
 Name of the database backend. It is being set from dsn value.The method <_build_driver> should be B<implemented> by consuming class.
 
-=attr driver_dsn
-
-=attr ddl
+=item ddl
 
 Location of the database specific ddl file. Should be B<implemented> by consuming class.
 
-=attr dbi_attributes
-
-Extra parameters for database connection, by default RaiseError and AutoCommit are set.
-
-=attr is_dynamic_schema
+=item is_dynamic_schema
 
 Indicates whether B<DBIx::Class::Schema> should be dynamic or comes from L<Bio::Chado::Schema>. Should be B<implemented> by consuming class.
 
-=method deploy_schema
+=item deploy_schema
 
 Load the database schema from the ddl file. Should be B<implemented> by consuming class.
 
-=method get_client_to_deploy
+=item get_client_to_deploy
 
 Full path for the command line client. Return undef in case not available. Should be B<implemented> by consuming class.
 
-=method deploy_by_client
+=item deploy_by_client
 
 Use backend specific command line tool to deploy the schema. Should be B<implemented> by consuming class.
 
-=method deploy_by_dbi
-
-Deploy schema using DBI
-
-=method drop_schema
+=item drop_schema
 
 Drop the loaded schema. Should be B<implemented> by consuming class.
 
-=method reset_schema
-
-First drops the schema, the reloads it. 
-
-=method create_database
+=item create_database
 
 Create database. Should be B<implemented> by consuming class.
 
-=method drop_database
+=item drop_database
 
 Drop database. Should be B<implemented> by consuming class.
+
+=back
+
+=head2 Optional
+
+=item user
+
+Database user
+
+=item password
+
+Database password
+
+=attr dsn
+
+Datasource dsn
+
+=item dbi_attributes
+
+Extra parameters for database connection, by default RaiseError and AutoCommit are set.
+
+=item driver_dsn
+
+=item deploy_by_dbi
+
+Deploy schema using DBI
+
+=item reset_schema
+
+First drops the schema, the reloads it. 
+
+=back
