@@ -1,5 +1,3 @@
-#!/usr/bin/perl -w
-
 package preparedbic;
 
 use strict;
@@ -13,12 +11,13 @@ use Getopt::Long::Descriptive;
 use Cwd;
 use File::Spec::Functions;
 use Bio::Chado::Schema;
+use File::Basename;
 
 my ( $opt, $usage ) = describe_options(
     '%c %o',
-    [ 'dsn=s',        'Database dsn', { required => 1 } ],
-    [ 'user|u:s',     'Database username' ],
-    [ 'password|p:s', 'Database password' ],
+    [ 'dsn=s',    'Database dsn', { required => 1 } ],
+    [ 'user|u:s', 'Database username' ],
+    [ 'pass|p:s', 'Database password' ],
     [   'config-dir:s',
         'Folder where DBIC-Fixtures json configuration file(s) are kept, default is the config folder under the current directory',
         { default => catdir( getcwd(), 'config' ) }
@@ -30,11 +29,11 @@ my ( $opt, $usage ) = describe_options(
     [   'pg-schema:s',
         'Name of Postgresql schema to use for dumping fixtures, default is ignored unless it is explicitly set for postgresql backend'
     ],
-    [ 'help|h' => 'Print this help' ],
     [   'output-folder:s',
-        'Output folder where the output will be written',
+        'Output folder where the compressed output will be written',
         { default => getcwd() }
-    ]
+    ],
+    [ 'help|h' => 'Print this help' ]
 );
 
 say $usage->text, exit if $opt->help;
@@ -52,8 +51,18 @@ my $fixture_dir = Path::Class::Dir->new($tmp_dir)->subdir('fixtures');
 my $fixture
     = DBIx::Class::Fixtures->new( { config_dir => $opt->config_dir } );
 
+my $archive = Archive::Tar->new;
+my $config_dir = Path::Class::Dir->new($opt->config_dir);
+
 for my $config_file ( sort { $a <=> $b } $fixture->available_config_sets ) {
     my $config_name = ( ( split /\./, $config_file ) )[0];
+
+    #add config to the archive
+    $archive->add_data(
+        catfile( 'config', basename($config_file) ),
+        $config_dir->file($config_file)->slurp
+    );
+
     my $dump_dir = $fixture_dir->subdir($config_name);
     say "dumping from config file $config_file in $fixture_dir";
 
@@ -66,8 +75,7 @@ for my $config_file ( sort { $a <=> $b } $fixture->available_config_sets ) {
 }
 
 my $outfile = Path::Class::Dir->new( $opt->output_folder )
-    ->file( $opt->output . 'tar.bz2' );
-my $archive = Archive::Tar->new;
+    ->file( $opt->output . '.tar.bz2' );
 for my $file ( File::Find::Rule->file->in($fixture_dir) ) {
     ( my $strip_file = $file ) =~ s/^$tmp_dir\///;
     my $data = Path::Class::File->new($file)->slurp;
