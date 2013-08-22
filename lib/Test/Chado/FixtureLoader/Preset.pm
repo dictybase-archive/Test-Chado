@@ -15,7 +15,6 @@ has 'namespace' => (
     default => 'test-chado'
 );
 
-
 sub load_fixtures {
     my ($self) = @_;
     my $staging_temp = File::Temp->newdir;
@@ -30,8 +29,32 @@ sub load_fixtures {
                 catdir( module_dir('Test::Chado'), 'fixture_config' )
         }
     );
-    for my $config_file ( sort  $fixture->available_config_sets )
-    {
+    for my $config_file ( sort $fixture->available_config_sets ) {
+        my $fixture_dir = catdir( $staging_temp, 'fixtures',
+            ( ( split /\./, $config_file ) )[0] );
+        $fixture->populate(
+            {   directory => $fixture_dir,
+                no_deploy => 1,
+                schema    => $self->dynamic_schema
+            }
+        );
+    }
+}
+
+sub load_custom_fixtures {
+    my ( $self, $preset ) = @_;
+
+    die "could not find $preset file\n" if !-e $preset;
+
+    my $staging_temp = File::Temp->newdir;
+    my $archive      = Archive::Tar->new($preset);
+    $archive->setcwd($staging_temp);
+    $archive->extract;
+
+    my $fixture = DBIx::Class::Fixtures->new(
+        { config_dir => catdir( $staging_temp, 'fixtures', 'config' ) } );
+
+    for my $config_file ( sort $fixture->available_config_sets ) {
         my $fixture_dir = catdir( $staging_temp, 'fixtures',
             ( ( split /\./, $config_file ) )[0] );
         $fixture->populate(
