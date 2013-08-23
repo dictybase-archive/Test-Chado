@@ -7,6 +7,8 @@ use Archive::Tar;
 use Types::Standard qw/Str/;
 use File::Temp;
 use File::Spec::Functions;
+use File::Find::Rule;
+use File::Basename;
 
 has 'namespace' => (
     is      => 'rw',
@@ -51,10 +53,13 @@ sub load_custom_fixtures {
     $archive->setcwd($staging_temp);
     $archive->extract;
 
-    my $fixture = DBIx::Class::Fixtures->new(
-        { config_dir => catdir( $staging_temp, 'fixtures', 'config' ) } );
+    my $config_dir = catdir( $staging_temp, 'config' );
+    my $fixture = DBIx::Class::Fixtures->new( { config_dir => $config_dir } );
 
-    for my $config_file ( sort $fixture->available_config_sets ) {
+    my @all_configs = map { basename $_}
+        File::Find::Rule->file->name(qr/\.json$/)->in($config_dir);
+
+    for my $config_file (@all_configs) {
         my $fixture_dir = catdir( $staging_temp, 'fixtures',
             ( ( split /\./, $config_file ) )[0] );
         $fixture->populate(
