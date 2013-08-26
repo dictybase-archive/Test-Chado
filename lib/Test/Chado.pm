@@ -22,7 +22,8 @@ use Sub::Exporter -setup => {
 };
 
 my %opt = ();
-GetOptions( \%opt, 'dsn:s', 'user:s', 'password:s' , 'postgression', 'testpg');
+GetOptions( \%opt, 'dsn:s', 'user:s', 'password:s', 'postgression',
+    'testpg' );
 
 class_has 'dbmanager_instance' => ( is => 'rw', isa => MaybeDbManager );
 
@@ -32,6 +33,7 @@ class_has 'is_schema_loaded' =>
 class_has 'fixture_loader_instance' => (
     is  => 'rw',
     isa => MaybeFixtureLoader,
+    clearer => 1
 );
 
 class_has 'fixture_loader' =>
@@ -62,6 +64,7 @@ sub _drop_schema {
         my $fixture_loader = $class->get_fixture_loader;
         $fixture_loader->dbmanager->drop_schema;
         $class->is_schema_loaded(0);
+        $class->clear_fixture_loader_instance;
     };
 }
 
@@ -74,6 +77,14 @@ sub _build_schema {
             $fixture_loader->dbmanager->deploy_schema;
             $class->is_schema_loaded(1);
         }
+        if ( defined $arg{'custom_fixture'} ) {
+            die
+                "only **preset** fixture loader can be used with custom_fixture\n"
+                if $class->fixture_loader ne 'preset';
+            $fixture_loader->load_custom_fixtures( $arg{'custom_fixture'} );
+            return $fixture_loader->dynamic_schema;
+        }
+
         $fixture_loader->load_fixtures
             if defined $arg{'load_fixture'};
         return $fixture_loader->dynamic_schema;
@@ -84,11 +95,11 @@ sub get_fixture_loader {
     my ($class) = @_;
     if ( !$class->fixture_loader_instance ) {
         my ( $loader, $dbmanager );
-        if (exists $opt{postgression}) {
-            $dbmanager
-                = Test::Chado::Factory::DBManager->get_instance('postgression');
+        if ( exists $opt{postgression} ) {
+            $dbmanager = Test::Chado::Factory::DBManager->get_instance(
+                'postgression');
         }
-        elsif (exists $opt{testpg}) {
+        elsif ( exists $opt{testpg} ) {
             $dbmanager
                 = Test::Chado::Factory::DBManager->get_instance('testpg');
         }
@@ -116,11 +127,9 @@ sub get_fixture_loader {
     return $class->fixture_loader_instance;
 }
 
-
 1;
 
 # ABSTRACT: Unit testing for chado database modules and applications
-
 
 =head1 SYNOPSIS
 
@@ -235,7 +244,14 @@ However, because of the way the backends works, for Sqlite it returns a on the f
 
 =item B<options>
 
-B<load_fixture> : Pass a true value(1) to load the default fixture
+B<load_fixture> : Pass a true value(1) to load the default fixture, default is false.
+
+B<custom_fixture>: Path to a custom fixture file made with L<DBIx::Class::Fixtures>. It
+should be a compressed tarball. Currently it is recommended to use
+B<tc-prepare-fixture> script to make custom fixutre so that it fits the expected layout.
+Remember, only one fixture set could be loaded at one time and if both of them specified,
+I<custom_fixture> will take precedence.
+
 
 =back
 
