@@ -54,7 +54,7 @@ SQL
         local $Test::DatabaseRow::dbh
             = Test::Chado->get_fixture_loader->dbmanager->dbh;
 
-        my $sql = <<'SQL';
+         $sql = <<'SQL';
                SELECT reltype FROM pg_class where 
                  relnamespace = (SELECT oid FROM 
                  pg_namespace where nspname = 'public')

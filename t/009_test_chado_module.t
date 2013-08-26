@@ -1,7 +1,9 @@
 use Test::More qw/no_plan/;
 use Test::Exception;
 use File::Temp qw/tmpnam/;
+use Test::DatabaseRow;
 use Module::Load qw/load/;
+use File::ShareDir qw/module_file/;
 use Class::Unload;
 
 use_ok 'Test::Chado';
@@ -70,7 +72,6 @@ subtest 'schema and fixture managements through commandline arguments' =>
     lives_ok { Test::Chado->is_schema_loaded(0) }
     'should reset schema loading flag';
 
-
     my $schema;
     lives_ok { $schema = chado_schema( load_fixture => 1 ) }
     'should run chado_schema with load_fixture';
@@ -85,3 +86,25 @@ subtest 'schema and fixture managements through commandline arguments' =>
     lives_ok { drop_schema() } 'should run drop_schema';
     lives_ok { reload_schema() } 'should run reload_schema';
     };
+
+subtest 'loading custom schema with default loader' => sub {
+    my $schema;
+    my $preset = module_file( 'Test::Chado', 'cvpreset.tar.bz2' );
+    lives_ok { $schema = chado_schema( custom_fixture => $preset ) }
+    'should accept custom fixture';
+    isa_ok( $schema, 'DBIx::Class::Schema' );
+
+    local $Test::DatabaseRow::dbh
+        = Test::Chado->fixture_loader_instance->dbmanager->dbh;
+
+    row_ok(
+        sql         => "SELECT * FROM cv where name = 'cv_property'",
+        results     => 1,
+        description => 'should have cv_property ontology'
+    );
+    row_ok(
+        sql         => "SELECT * FROM db",
+        results     => 2,
+        description => 'should have 2 db table rows'
+    );
+};

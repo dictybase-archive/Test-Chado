@@ -3,6 +3,7 @@ use Test::Exception;
 use File::Temp qw/tmpnam/;
 use Test::DatabaseRow;
 use Module::Load qw/load/;
+use File::ShareDir qw/module_file/;
 use SQL::Abstract;
 
 SKIP: {
@@ -89,11 +90,28 @@ SKIP: {
             description => 'should have all four tables'
         );
         row_ok(
-            sql => "SELECT * FROM organism",
-            results => 0,
+            sql         => "SELECT * FROM $namespace.organism",
+            results     => 0,
             description => "should not have any fixture after reload"
         );
+        lives_ok { drop_schema() } 'should run drop_schema';
 
     };
-    Test::Chado->get_fixture_loader->dbmanager->drop_schema;
+
+    subtest 'loading custom fixtures with postgresql loader' => sub {
+        my $schema;
+        my $preset = module_file( 'Test::Chado', 'cvpreset.tar.bz2' );
+        lives_ok { $schema = chado_schema( custom_fixture => $preset ) }
+        'should accept custom fixture';
+        isa_ok( $schema, 'DBIx::Class::Schema' );
+
+        local $Test::DatabaseRow::dbh
+            = Test::Chado->fixture_loader_instance->dbmanager->dbh;
+        is( $schema->resultset('Cv::Cv')->count( { name => 'cv_property' } ),
+            1,
+            'should have cv_property ontology'
+        );
+        lives_ok { drop_schema() } 'should run drop_schema';
+    };
+
 }
