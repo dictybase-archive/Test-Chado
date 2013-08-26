@@ -26,6 +26,7 @@ has 'schema_namespace' => (
     is      => 'ro',
     isa     => Str,
     lazy    => 1,
+    clearer => 1,
     default => sub {
         my ($self) = @_;
         return join '',
@@ -76,6 +77,7 @@ sub drop_schema {
     my $dbh       = $self->dbh;
     my $namespace = $self->schema_namespace;
     $dbh->do(qq{DROP SCHEMA IF EXISTS $namespace CASCADE});
+    $self->clear_schema_namespace;
 }
 
 sub get_client_to_deploy {
