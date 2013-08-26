@@ -8,13 +8,13 @@ version 1.0.0
 
 # SYNOPSIS
 
-#### Start with a perl module
+### Start with a perl module
 
 This means you have a module with namespace(with or without double colons), along with __Makefile.PL__ or __Build.PL__ or even __dist.ini__. You have your libraries in
 __lib/__ folder and going to write tests in __t/__ folder.
 This could an existing or new module, anything would work.
 
-#### Write tests 
+### Write tests 
 
 It should be in your .t file(t/dbtest.t for example)
 
@@ -31,7 +31,7 @@ It should be in your .t file(t/dbtest.t for example)
 
     drop_schema();
 
-#### Run any test commands to test it against chado sqlite
+### Run any test commands to test it against chado sqlite
 
     prove -lv t/dbtest.t
 
@@ -39,7 +39,7 @@ It should be in your .t file(t/dbtest.t for example)
 
     make test
 
-#### Run against postgresql
+### Run against postgresql
 
     #Make sure you have a database with enough permissions
     
@@ -50,7 +50,7 @@ It should be in your .t file(t/dbtest.t for example)
 
     make test  --dsn "dbi:Pg:dbname=testchado;host=localhost"  --user tucker --password halo
 
-#### Run against postgresql without setting any custom server
+### Run against postgresql without setting any custom server
 
     prove -l --postgression t/dbtest.t
 
@@ -62,12 +62,12 @@ It should be in your .t file(t/dbtest.t for example)
 
 Use the __quick start__ or pick any of the section below to start your testing. All the source code for this documentation is also available [here](https://github.com/dictyBase/Test-Chado-Guides).
 
-- [Quick start](#lib/Test/Chado/Manual/QuickStart.pod) 
-- [Testing perl distribution](#lib/Test/Chado/Manual/TestingWithDistribution.pod) 
-- [Testing web application](#lib/Test/Chado/Manual/TestingWithWebApp.pod) 
-- [Testing with postgresql ](http://search.cpan.org/perldoc?Test::Chado::Manual::TestingWithPostgres) 
-- [Loading custom schema for tesing ](http://search.cpan.org/perldoc?Test::Chado::Manual::TestingWithCustomSchema) 
-- [Loading custom fixtures ](http://search.cpan.org/perldoc?Test::Chado::Manual::TestingWithCustomFixtures) 
+- [Quick start](http://search.cpan.org/perldoc?Test::Chado::Manual::QuickStart.pod) 
+- [Testing perl distribution](http://search.cpan.org/perldoc?Test::Chado::Manual::TestingWithDistribution.pod) 
+- [Testing web application](http://search.cpan.org/perldoc?Test::Chado::Manual::TestingWithWebApp.pod) 
+- [Testing with postgresql](http://search.cpan.org/perldoc?Test::Chado::Manual::TestingWithPostgres) 
+- [Loading custom schema(sql statements) for testing](http://search.cpan.org/perldoc?Test::Chado::Manual::TestingWithCustomSchema) 
+- [Loading custom fixtures(test data)](http://search.cpan.org/perldoc?Test::Chado::Manual::TestingWithCustomFixtures) 
 
 # API
 
@@ -101,7 +101,13 @@ All the methods are available as exported subroutines by default
 
     - __options__
 
-        __load\_fixture__ : Pass a true value(1) to load the default fixture
+        __load\_fixture__ : Pass a true value(1) to load the default fixture, default is false.
+
+        __custom\_fixture__: Path to a custom fixture file made with [DBIx::Class::Fixtures](http://search.cpan.org/perldoc?DBIx::Class::Fixtures). It
+        should be a compressed tarball. Currently it is recommended to use
+        __tc-prepare-fixture__ script to make custom fixutre so that it fits the expected layout.
+        Remember, only one fixture set could be loaded at one time and if both of them specified,
+        _custom\_fixture_ will take precedence.
 
 - __drop\_schema__
 - __reload\_schema__

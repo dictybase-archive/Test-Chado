@@ -4,7 +4,7 @@
       "Siddhartha Basu <biosidd@gmail.com>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Zilla version 4.300034, CPAN::Meta::Converter version 2.130880",
+   "generated_by" : "Dist::Zilla version 4.300035, CPAN::Meta::Converter version 2.132140",
    "license" : [
       "perl_5"
    ],
@@ -55,6 +55,11 @@
             "YAML" : "0.70",
             "namespace::autoclean" : "0.11",
             "perl" : "5.010"
+         },
+         "suggests" : {
+            "DBD::Pg" : "v2.19.3",
+            "File::Find::Rule" : "0.33",
+            "Getopt::Long::Descriptive" : "0.093"
          }
       },
       "test" : {

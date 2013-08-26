@@ -22,6 +22,9 @@ requires "XML::XPath" => "1.13";
 requires "YAML" => "0.70";
 requires "namespace::autoclean" => "0.11";
 requires "perl" => "5.010";
+suggests "DBD::Pg" => "v2.19.3";
+suggests "File::Find::Rule" => "0.33";
+suggests "Getopt::Long::Descriptive" => "0.093";
 
 on 'build' => sub {
   requires "Module::Build" => "0.3601";

@@ -48,7 +48,9 @@ my %module_build_args = (
     "namespace::autoclean" => "0.11",
     "perl" => "5.010"
   },
-  "script_files" => [],
+  "script_files" => [
+    "bin/tc-prepare-fixture"
+  ],
   "share_dir" => {
     "dist" => "share",
     "module" => {
