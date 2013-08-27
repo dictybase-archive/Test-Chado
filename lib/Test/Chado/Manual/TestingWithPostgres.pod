@@ -1,0 +1,93 @@
+#PODNAME: bobby_tables3.pl
+
+=head2 Using Test::Chado with postgresql backend
+
+The backend database for L<Test::Chado> could be easily switched to L<postgresql|http://www.postgresql.org/> by setting command line parameters.
+B<Test::Chado> provides few options for B<postgresql> testing. 
+
+=head3 Existing postgresql server
+
+The server should be or needs the following basic setup
+
+=over
+
+=item 
+
+A new or existing database, either way B<Test::Chado> works fine.
+
+=item
+
+The connecting user should have priviledge to create and delete a postgresql L<schema|http://www.postgresql.org/docs/9.2/static/ddl-schemas.html> schema.
+
+=item 
+
+The connecting user should be able to create, select, alter, delete, update on that database.
+
+=back
+
+Overall, it's recommend to use a separate database and user to perform unit tests. However, if not possible, just tweak the existing user.
+
+
+=head4 Running tests
+
+It is done by passing the following options ...
+
+=over
+
+=item 
+
+B<--dsn:> It is identical to perl L<DBI> option, should look like B<dbi:Pg:dbname=mydb;host=myhost;port=myport>
+
+=item
+
+B<--user:> The username for connecting.
+
+=item
+
+B<--password:> The password for authentication, if any.
+
+=back
+
+
+Then run the usual way
+
+    prove --dsn "dbi:Pg:dbname=mydb;host=myhost;port=myport" --user myuser --password mypass t/test_chado.t
+
+    ./Build test --dsn "dbi:Pg:dbname=mydb;host=myhost;port=myport" --user myuser --password mypass
+
+    make test --dsn "dbi:Pg:dbname=mydb;host=myhost;port=myport" --user myuser --password mypass
+
+
+=head3 Third party services
+
+Using third party service takes care of the setup part completely. In this case, only client softwares(libpq and DBD::Pg) needs to be installed.
+
+=head4 Heroku postgresql 
+
+L<Heroku|https://postgres.heroku.com/> provides free postgresql databases for development that could be easily used with B<Test::Chado>.
+To get started, just create an account from the above page, then create a postgresql database and feed the credential information to B<Test::Chado> for testing.
+In fact the test suite of B<Test::Chado> itself is throughly tested with heroku postgresql.
+
+Run tests the usual way, no extra setup is neccessary ....
+
+    prove --dsn "dbi:Pg:dbname=herokudb;host=herokuhost" --user herokuuser --password herokupass t/test_chado.t
+
+    ./Build test "dbi:Pg:dbname=herokudb;host=herokuhost" --user herokuuser --password herokupass t/test_chado.t
+
+    make test --dsn "dbi:Pg:dbname=herokudb;host=herokuhost" --user herokuuser --password herokupass t/test_chado.t
+
+
+=head4 Postgression
+
+L<Postgression|http://www.postgression.com/> provides free postgresql datbase instance only for unit testing. Hitting each instance of their api creates a new postgresql
+database which stays available for next half an hour(30 mins). They have a limit of 100 databases/per hour/per IP. 
+The provided time and database instances should be more than enough to finish a good unit testing suite.
+Running unit tests is even easier, no database credential needs to be passed, B<Test::Chado> takes care of it.
+
+        prove --postgression t/test_chado.t
+
+        ./Build test --postgression
+
+        make test --postgression
+
+

@@ -1,222 +1,289 @@
-use strict;
-use warnings;
 package Test::Chado;
+use Test::Chado::Factory::DBManager;
+use Test::Chado::Factory::FixtureLoader;
+use Test::Chado::Types qw/MaybeFixtureLoader MaybeDbManager/;
+use Types::Standard qw/Str Bool/;
+use Moo;
+use DBI;
+use MooX::ClassAttribute;
+use Getopt::Long;
+use Sub::Exporter -setup => {
+    exports => {
+        'chado_schema'       => \&_build_schema,
+        'drop_schema'        => \&_drop_schema,
+        'reload_schema'      => \&_reload_schema,
+        'set_fixture_loader' => \&_set_fixture_loader
+    },
+    groups => {
+        'default' =>
+            [qw/chado_schema reload_schema set_fixture_loader drop_schema/],
+        'schema' => [qw/chado_schema drop_schema reload_schema/]
+    }
+};
+
+my %opt = ();
+GetOptions( \%opt, 'dsn:s', 'user:s', 'password:s', 'postgression',
+    'testpg' );
+
+class_has 'dbmanager_instance' => ( is => 'rw', isa => MaybeDbManager );
+
+class_has 'is_schema_loaded' =>
+    ( is => 'rw', isa => Bool, default => 0, lazy => 1 );
+
+class_has 'fixture_loader_instance' => (
+    is  => 'rw',
+    isa => MaybeFixtureLoader,
+    clearer => 1
+);
+
+class_has 'fixture_loader' =>
+    ( is => 'rw', isa => Str, default => 'preset', lazy => 1 );
+
+sub _set_fixture_loader {
+    my ($class) = @_;
+    return sub {
+        my ($arg) = @_;
+        if ($arg) {
+            $class->fixture_loader($arg);
+        }
+    };
+}
+
+sub _reload_schema {
+    my ($class) = @_;
+    return sub {
+        my $fixture_loader = $class->get_fixture_loader;
+        $fixture_loader->dbmanager->reset_schema;
+        $class->is_schema_loaded(1);
+    };
+}
+
+sub _drop_schema {
+    my ($class) = @_;
+    return sub {
+        my $fixture_loader = $class->get_fixture_loader;
+        $fixture_loader->dbmanager->drop_schema;
+        $class->is_schema_loaded(0);
+        $class->clear_fixture_loader_instance;
+    };
+}
+
+sub _build_schema {
+    my ($class) = @_;
+    return sub {
+        my (%arg) = @_;
+        my $fixture_loader = $class->get_fixture_loader;
+        if ( !$class->is_schema_loaded ) {
+            $fixture_loader->dbmanager->deploy_schema;
+            $class->is_schema_loaded(1);
+        }
+        if ( defined $arg{'custom_fixture'} ) {
+            die
+                "only **preset** fixture loader can be used with custom_fixture\n"
+                if $class->fixture_loader ne 'preset';
+            $fixture_loader->load_custom_fixtures( $arg{'custom_fixture'} );
+            return $fixture_loader->dynamic_schema;
+        }
+
+        $fixture_loader->load_fixtures
+            if defined $arg{'load_fixture'};
+        return $fixture_loader->dynamic_schema;
+    };
+}
+
+sub get_fixture_loader {
+    my ($class) = @_;
+    if ( !$class->fixture_loader_instance ) {
+        my ( $loader, $dbmanager );
+        if ( exists $opt{postgression} ) {
+            $dbmanager = Test::Chado::Factory::DBManager->get_instance(
+                'postgression');
+        }
+        elsif ( exists $opt{testpg} ) {
+            $dbmanager
+                = Test::Chado::Factory::DBManager->get_instance('testpg');
+        }
+        elsif ( defined $opt{dsn} ) {
+            my ( $scheme, $driver, $attr_str, $attr_hash, $driver_dsn )
+                = DBI->parse_dsn( $opt{dsn} );
+            $dbmanager
+                = Test::Chado::Factory::DBManager->get_instance($driver);
+            $dbmanager->dsn( $opt{dsn} );
+            $dbmanager->user( $opt{user} )         if defined $opt{user};
+            $dbmanager->password( $opt{password} ) if defined $opt{password};
+        }
+        else {
+            $dbmanager
+                = $class->dbmanager_instance
+                ? $class->dbmanager_instance
+                : Test::Chado::Factory::DBManager->get_instance('sqlite');
+        }
+
+        $loader = Test::Chado::Factory::FixtureLoader->get_instance(
+            $class->fixture_loader );
+        $loader->dbmanager($dbmanager);
+        $class->fixture_loader_instance($loader);
+    }
+    return $class->fixture_loader_instance;
+}
 
 1;
 
-# ABSTRACT: Build,configure and test chado database backed modules and applications
+# ABSTRACT: Unit testing for chado database modules and applications
 
 =head1 SYNOPSIS
 
-=head3 Write build script(Build.PL) for your module or web application:
+=head3 Start with a perl module
 
-   use Module::Build::Chado;
+This means you have a module with namespace(with or without double colons), along with B<Makefile.PL> or B<Build.PL> or even B<dist.ini>. You have your libraries in
+B<lib/> folder and going to write tests in B<t/> folder.
+This could an existing or new module, anything would work.
 
-   my $build = Module::Build::Chado->new(
-                 module_name => 'MyChadoApp', 
-                 license => 'perl', 
-                 dist_abstract => 'My chado module'
-                 dist_version => '1.0'
+=head3 Write tests 
 
-   );
-
-  $build->create_build_script;
-
-
-=head3 Then from the command line:
-
-  perl Build.PL && ./Build test(default is a temporary SQLite database)
-
-It will deploy chado schema in a SQLite database, load fixtures and run all tests)
-
-
-=head3 In each of the test file(.t) access the schema(Bio::Chado::Schema) object
-
-   use Module::Build::Chado;
-
-   my $schema = Module::Build::Chado->current->schema;
-
-   #do something with it ....
-
-   $schema->resultset('Organism::Organism')->....
-
-=head3 Use for other database backend
-
-B<PostgreSQL>
-
-  ./Build test --dsn "dbi:Pg:dbname=mychado" --user tucker --password booze
-
-B<Oracle>
-
-   ./Build test --dsn "dbi:Oracle:sid=myoracle" --user tucker --password hammer
-
-
-=head1 DESCRIPTION
-
-This is subclass of L<Module::Build> to configure,  build and test
-L<chado|http://gmod.org/wiki/Chado> database backed
-perl modules and applications. During the B</Build test>  testing phase it loads some
-default fixtures which can be accessed in every test(.t) file using standard
-L<DBIx::Class> API.
-
-=head2 Default fixtures loaded
-
-=over
-
-=item  List of organisms
-
-Look at the organism.yaml in the shared folder
-
-=item Relationship ontology
-
-OBO relationship types, available here
-L<http://bioportal.bioontology.org/ontologies/1042>. 
-
-=item Sequence ontology
-
-Sequence types and features,  available here
-L<http://bioportal.bioontology.org/ontologies/1109>
-
-=back
-
-
-=head2 Accessing fixtures data in test(.t) files
-
-=over
-
-=item Get a L<Bio::Chado::Schema> aka L<DBIx::Class> object
-
-my $schema = Module::Build->current->schema;
-
-isa_ok($schema, 'Bio::Chado::Schema');
-
-=item Access them using L<DBIx::Class> API
-
-  my $row = $schema->resultset('Organism::Organism')->find({species => 'Homo',  genus =>
-'sapiens'});
-
-  my $resultset = $schema->resultset('Organism::Organism')->search({});
-
-  my $relonto = $schema->resultset('Cv::Cv')->find({'name' => 'relationship'});
-
-  my $seqonto = $schema->resultset('Cv::Cv')->find({'name' => 'sequence'});
-
-  my $cvterm_rs = $seqonto->cvterms;
+It should be in your .t file(t/dbtest.t for example)
   
-  while(my $cvterm = $cvterm_rs->next) {
-    .....
-  }
+  use Test::More;
+  use Test::Chado;
+  use Test::Chado::Common;
 
-  You probably will not be accessing them too often,  but mostly needed to load other test
-  fixtures.
+  my $schema = chado_schema(load_fixtures => 1);
 
-=back
+  has_cv($schema,'sequence', 'should have sequence ontology');
+  has_cvterm($schema, 'part_of', 'should have term part_of');
+  has_db($schema, 'SO', 'should have SO in db table');
+  has_dbxref($schema, '0000010', 'should have 0000010 in dbxref');
 
-=head2 Loading custom fixtures
+  drop_schema();
 
-=over 
+=head3 Run any test commands to test it against chado sqlite
 
-=item *
+  prove -lv t/dbtest.t
 
-Create your own subclass and implement either or both of two methods
-B<before_all_fixtures> and B<after_all_fixtures>
+  ./Build test 
+
+  make test
+
+=head3 Run against postgresql
+
+  #Make sure you have a database with enough permissions
+  
+  prove -l --dsn "dbi:Pg:dbname=testchado;host=localhost"  --user tucker --password halo t/dbtest.t
+
+  ./Build test --dsn "dbi:Pg:dbname=testchado;host=localhost"  --user tucker --password halo
+
+  make test  --dsn "dbi:Pg:dbname=testchado;host=localhost"  --user tucker --password halo
+
+=head3 Run against postgresql without setting any custom server
+
+  prove -l --postgression t/dbtest.t
+
+  ./Build test --postgression
+
+  make test --postgression
+
+
+=head1 DOCUMENTATION
+
+Use the B<quick start> or pick any of the section below to start your testing. All the source code for this documentation is also available L<here|https://github.com/dictyBase/Test-Chado-Guides>.
 
 =over
 
-=item before_all_fixtures
+=item L<Quick start|Test::Chado::Manual::QuickStart.pod> 
 
-This code will run before any fixture is loaded
+=item L<Testing perl distribution|Test::Chado::Manual::TestingWithDistribution.pod> 
 
-=item after_all_fixtures
+=item L<Testing web application|Test::Chado::Manual::TestingWithWebApp.pod> 
 
-This code will run after organism data, relationship and sequence ontologies are loaded
+=item L<Testing with postgresql|Test::Chado::Manual::TestingWithPostgres> 
 
-=back
+=item L<Loading custom schema(sql statements) for testing|Test::Chado::Manual::TestingWithCustomSchema> 
 
-   package MyBuilder;
-   use base qw/Module::Build::Chado/;
+=item L<Loading custom fixtures(test data)|Test::Chado::Manual::TestingWithCustomFixtures> 
 
-   sub before_all_fixtures {
-      my ($self) = @_;
-   }
-
-   sub before_all_fixtures {
-      my ($self) = @_;
-   }
-
-=item *
-
-All the attributes and methods of B<Module::Build> and B<Module::Build::Chado> L<API>
-become available through I<$self>.
- 
 =back
 
 
 =head1 API
 
-=attr schema
-
-A L<Bio::Chado::Schema> object.
-
-=attr dsn
-
-Database connect string,  defaults to a temporary SQLite database.
-
-=attr user
-
-Database user,  not needed for SQLite backend.
-
-=attr password
-
-Database password,  not needed for SQLite backend.
-
-=attr superuser
-
-Database super user, in case the regular use do not have enough permissions for
-manipulating the database schema. It defaults to the user attribute.
-
-=attr superpassword
-
-Similar concept as superuser
-
-=attr ddl
-
-DDL file for particular backend,  by default comes for SQLite,  Postgresql and Oracle.
-
-=attr organism_fixuture
-
-Fixture for loading organisms,  by default the distribution comes with a organism.yaml
-file.
-
-=attr rel_fixuture
-
-Relation ontology file in obo_xml format. The distribution includes a relationship.obo_xml
-file.
-
-=attr so_fixuture
-
-Sequence ontology file in obo_xml format. By default,  it includes sofa.obo_xml file.
-
-
-
-=method connect_hash
-
-Returns a hash with the following connection specific keys ...
+=head3 Attributes
 
 =over
 
-=item dsn
+=item B<dbmanager_instance>
 
-=item user
+Instance of a backend manager that implements L<Test::Chado::Role::HasDBManager> role, currently either of Sqlite or Pg backend will be available.
 
-=item password
+=item B<is_schema_loaded>
 
-=item dbi_attributes
+Flag to check the loading status of chado schema
+
+=item B<fixture_loader_instance>
+
+Insatnce of L<Test::Chado::FixtureLoader::Preset> by default.
+
+=item B<fixture_loader>
+
+Type of fixture loader, could be either of B<preset> and flatfile. By default it is B<preset>
 
 =back
 
-=method connect_info
+=head3 Methods
 
-Returns an 4 elements array with connection arguments identical to L<DBI>'s B<connect>
-method.
+All the methods are available as exported subroutines by default
+
+=over
+
+=item B<chado_schema(%options)>
+
+Return an instance of DBIx::Class::Schema for chado database.
+
+However, because of the way the backends works, for Sqlite it returns a on the fly schema generated from L<DBIx::Class::Schema::Loader>, whereas for B<Pg> backend it returns L<Bio::Chado::Schema>
+
+=over
+
+=item B<options>
+
+B<load_fixture> : Pass a true value(1) to load the default fixture, default is false.
+
+B<custom_fixture>: Path to a custom fixture file made with L<DBIx::Class::Fixtures>. It
+should be a compressed tarball. Currently it is recommended to use
+B<tc-prepare-fixture> script to make custom fixutre so that it fits the expected layout.
+Remember, only one fixture set could be loaded at one time and if both of them specified,
+I<custom_fixture> will take precedence.
+
+
+=back
+
+=back
+
+=over
+
+=item B<drop_schema>
+
+=item B<reload_schema>
+
+Drops and then reloads the schema.
+
+=item set_fixture_loader
+
+Sets the type of fixture loader backend it should use, either of B<preset> or B<flatfile>.
+
+=back
+
+
+=head1 Build Status
+
+=begin HTML
+
+<a href='https://travis-ci.org/dictyBase/Test-Chado'>
+  <img src='https://travis-ci.org/dictyBase/Test-Chado.png?branch=develop'
+  alt='Travis CI status'/></a>
+
+<a href='https://coveralls.io/r/dictyBase/Test-Chado'><img
+src='https://coveralls.io/repos/dictyBase/Test-Chado/badge.png?branch=develop'
+alt='Coverage Status' /></a>
+
+
+=end HTML
 
