@@ -14,8 +14,7 @@ use Sub::Exporter -setup => {
         'has_alt_id'       => \&_has_alt_id,
         'has_comment'      => \&_has_comment,
         'has_relationship' => \&_has_relationship,
-        'has_subject'      => \&_has_subject,
-        'has_object'       => \&_has_object
+        'is_related'       => \&_is_subject,
     },
     groups => {
         'default' =>
@@ -195,19 +194,30 @@ sub _has_cvterm_synonym {
             $result_class = 'Cvterm';
         }
 
-        my $count = $schema->resultset($result_class)->count(
-            {   'cv.name'              => $param->{name},
-                'name'                 => $param->{term},
-                'cvtermsynonyms.value' => $param->{synonym},
-                'type.name' => { -in => [qw/BROAD EXACT NARROW RELATED/] }
-            },
-            { join => [ 'cv', { 'cvtermsynonyms' => 'type' } ] }
-        );
+        my $count;
+        if ( defined $param->{cv} ) {
+            $count = $schema->resultset($result_class)->count(
+                {   'cv.name'              => $param->{name},
+                    'name'                 => $param->{term},
+                    'cvtermsynonyms.value' => $param->{synonym},
+                    'type.name' => { -in => [qw/BROAD EXACT NARROW RELATED/] }
+                },
+                { join => [ 'cv', { 'cvtermsynonyms' => 'type' } ] }
+            );
+        }
+        else {
+            $count = $schema->resultset($result_class)->count(
+                {   'name'                 => $param->{term},
+                    'cvtermsynonyms.value' => $param->{synonym},
+                    'type.name' => { -in => [qw/BROAD EXACT NARROW RELATED/] }
+                },
+                { join => [ { 'cvtermsynonyms' => 'type' } ] }
+            );
+        }
         $test_builder->ok( $count, $msg );
         return $count;
     };
 }
-
 
 sub _has_alt_id {
     my ($class) = @_;
@@ -226,17 +236,140 @@ sub _has_alt_id {
             $result_class = 'Cvterm';
         }
 
-        my $count = $schema->resultset($result_class)->count(
-            {   'cv.name'              => $param->{name},
-                'name'                 => $param->{term},
-                'cvtermsynonyms.value' => $param->{synonym},
-                'type.name' => { -in => [qw/BROAD EXACT NARROW RELATED/] }
-            },
-            { join => [ 'cv', { 'cvtermsynonyms' => 'type' } ] }
-        );
+        my $count;
+        if ( defined $param->{cv} ) {
+            $count = $schema->resultset($result_class)->search(
+                {   'cv.name' => $param->{name},
+                    'name'    => $param->{term},
+                },
+                { join => 'cv' }
+                )->search_related( 'cvterm_dbxrefs', {} )
+                ->count_related( 'dbxref',
+                { 'accession' => $param->{alt_id} } );
+        }
+        else {
+            $count
+                = $schema->resultset($result_class)
+                ->search( { 'name' => $param->{term}, }, { join => 'cv' } )
+                ->search_related( 'cvterm_dbxrefs', {} )
+                ->count_related( 'dbxref',
+                { 'accession' => $param->{alt_id} } );
+
+        }
         $test_builder->ok( $count, $msg );
         return $count;
     };
+}
+
+sub _has_comment {
+    my ($class) = @_;
+    return sub {
+        my ( $schema, $param, $msg ) = @_;
+        my $test_builder = $class->test_builder;
+        $test_builder->croak('need a schema') if !$schema;
+        $test_builder->croak('need options')  if !$param;
+        $class->_check_params_or_die( [qw/cv term comment/], $param );
+
+        my $result_class;
+        if ( $schema->isa('Bio::Chado::Schema') ) {
+            $result_class = 'Cv::Cvterm';
+        }
+        else {
+            $result_class = 'Cvterm';
+        }
+
+        my $count;
+        if ( $param->{cv} ) {
+            $count = $schema->resultset($result_class)->search(
+                {   'cv.name' => $param->{name},
+                    'name'    => $param->{term},
+                },
+                { join => 'cv' }
+                )->count_related(
+                'cvtermprops',
+                {   'value'     => $param->{comment},
+                    'type.name' => 'comment',
+                    'cv_2.name' => 'cvterm_property_type'
+                },
+                { join => { 'type' => 'cv' } }
+                );
+        }
+        else {
+            $count = $schema->resultset($result_class)->search(
+                {   'cv.name' => $param->{name},
+                    'name'    => $param->{term},
+                },
+                { join => 'cv' }
+                )->count_related(
+                'cvtermprops',
+                {   'value'     => $param->{comment},
+                    'type.name' => 'comment',
+                    'cv_2.name' => 'cvterm_property_type'
+                },
+                { join => { 'type' => 'cv' } }
+                );
+
+        }
+        $test_builder->ok( $count, $msg );
+        return $count;
+    };
+}
+
+sub _has_relationship {
+    my ($class) = @_;
+    return sub {
+        my ( $schema, $param, $msg ) = @_;
+        my $test_builder = $class->test_builder;
+        $test_builder->croak('need a schema') if !$schema;
+        $test_builder->croak('need options')  if !$param;
+        $class->_check_params_or_die( [qw/object subject relationship/],
+            $param );
+
+        my $result_class;
+        if ( $schema->isa('Bio::Chado::Schema') ) {
+            $result_class = 'Cv::CvtermRelationship';
+        }
+        else {
+            $result_class = 'CvtermRelationship';
+        }
+
+        my $count = $schema->resultset($result_class)->count(
+            'object.name'  => $param->{object},
+            'subject.name' => $param->{subject},
+            'type.name'    => $param->{relationship};
+        }, { join => [ 'subject', 'object', 'type' ] }
+        );
+    $test_builder->ok( $count, $msg );
+    return $count;
+}
+}
+
+sub _is_related {
+    my ($class) = @_;
+    return sub {
+        my ( $schema, $param, $msg ) = @_;
+        my $test_builder = $class->test_builder;
+        $test_builder->croak('need a schema') if !$schema;
+        $test_builder->croak('need options')  if !$param;
+        $class->_check_params_or_die( [qw/object subject/], $param );
+
+        my $result_class;
+        if ( $schema->isa('Bio::Chado::Schema') ) {
+            $result_class = 'Cv::CvtermRelationship';
+        }
+        else {
+            $result_class = 'CvtermRelationship';
+        }
+
+        my $count = $schema->resultset($result_class)->count(
+            'object.name'  => $param->{object},
+            'subject.name' => $param->{subject},
+            ;
+        }, { join => [ 'subject', 'object' ] }
+        );
+    $test_builder->ok( $count, $msg );
+    return $count;
+}
 }
 
 =head1 API
@@ -249,8 +382,6 @@ sub _has_alt_id {
 
 All methods are available as exported subroutines by default
 
-=back
-
 =item
 
 The first two parameters are manadotry.
@@ -259,7 +390,7 @@ The first two parameters are manadotry.
 
 =over
 
-=item count_cvterm_ok(L<DBIx::Class::Schema>, \%parameters, [description])
+=item count_cvterm_ok(L<DBIx::Class::Schema>, \%expected, [description])
 
 =over
 
@@ -271,15 +402,15 @@ B<count>: Expected number of cvterms in that cv
 
 =back
 
-=item count_synonym_ok(L<DBIx::Class::Schema>, \%parameters, [description])
+=item count_synonym_ok(L<DBIx::Class::Schema>, \%expected, [description])
 
 Identical parameters as B<count_cvterm_ok>
 
-=item count_alt_id_ok(L<DBIx::Class::Schema>, \%parameters, [description])
+=item count_alt_id_ok(L<DBIx::Class::Schema>, \%expected, [description])
 
 Identical parameters as B<count_cvterm_ok>
 
-=item count_subject_ok(L<DBIx::Class::Schema>, \%parameters, [description])
+=item count_subject_ok(L<DBIx::Class::Schema>, \%expected, [description])
 
 Tests the number of children terms for a parent.
 
@@ -297,7 +428,7 @@ B<relationship>: Name of relationship, optional
 
 =back
 
-=item count_object_ok(L<DBIx::Class::Schema>, \%parameters, [description])
+=item count_object_ok(L<DBIx::Class::Schema>, \%expected, [description])
 
 Tests the number of parent terms for a child.
 
@@ -315,7 +446,7 @@ B<relationship>: Name of relationship, optional
 
 =back
 
-=item has_cvterm_synonym(L<DBIx::Class::Schema>, \%parameters, [description])
+=item has_cvterm_synonym(L<DBIx::Class::Schema>, \%expected, [description])
 
 Tests if a cvterm has particular synonym.
 
@@ -331,7 +462,7 @@ B<synonym>: Name of synonym.
 
 =back
 
-=item has_alt_id(L<DBIx::Class::Schema>, \%parameters, [description])
+=item has_alt_id(L<DBIx::Class::Schema>, \%expected, [description])
 
 Tests if a cvterm has particular alternate id.
 
@@ -339,7 +470,7 @@ Tests if a cvterm has particular alternate id.
 
 =item B<parameters>
 
-B<cv>: Name of the cv, parametersal.
+B<cv>: Name of the cv, optional.
 
 B<term>: Name of cvterm.
 
@@ -347,7 +478,7 @@ B<alt_id>: Name of alternate id.
 
 =back
 
-=item has_comment(L<DBIx::Class::Schema>, cvterm name, [description])
+=item has_comment(L<DBIx::Class::Schema>, \%expected, [description])
 
 Tests if a cvterm has particular comment.
 
@@ -355,7 +486,7 @@ Tests if a cvterm has particular comment.
 
 =item B<parameters>
 
-B<cv>: Name of the cv, parametersal.
+B<cv>: Name of the cv, optional.
 
 B<term>: Name of cvterm.
 
@@ -363,7 +494,7 @@ B<comment>: Comment text.
 
 =back
 
-=item has_relationship(L<DBIx::Class::Schema>, \%parameters, [description])
+=item has_relationship(L<DBIx::Class::Schema>, \%expected, [description])
 
 Tests if parent and child has a particular relationship
 
@@ -371,7 +502,7 @@ Tests if parent and child has a particular relationship
 
 =item B<parameters>
 
-B<cv>: Name of the cv, parametersal.
+B<cv>: Name of the cv, optional.
 
 B<object>: Name of the parent term.
 
@@ -381,38 +512,19 @@ B<relationship>: Name of the relationship term.
 
 =back
 
-=item has_subject(L<DBIx::Class::Schema>, \%parameters, [description])
 
-Tests if a parent has a particular child
+=item is_related(L<DBIx::Class::Schema>, \%expected, [description])
 
-=over
-
-=item B<parameters>
-
-B<cv>: Name of the cv, parametersal.
-
-B<object>: Name of the parent term.
-
-B<subject>: Name of the child term.
-
-B<relationship>: Name of the relationship term, parametersal.
-
-
-=item has_object(L<DBIx::Class::Schema>, feature name, [description])
-
-Tests if a child has a particular parent
+Tests if a parent has a particular child or vice versa.
 
 =over
 
 =item B<parameters>
 
-B<cv>: Name of the cv, parametersal.
-
 B<object>: Name of the parent term.
 
 B<subject>: Name of the child term.
 
-B<relationship>: Name of the relationship term, parametersal.
-
+=back
 
 =back
