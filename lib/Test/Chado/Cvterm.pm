@@ -17,8 +17,9 @@ use Sub::Exporter -setup => {
         'is_related'       => \&_is_subject,
     },
     groups => {
-        'default' =>
-            [qw/has_cv has_dbxref has_cvterm has_feature has_featureloc/]
+        'default' => [
+            qw/count_alt_id_ok count_cvterm_ok count_synonym_ok count_subject_ok count_object_ok/
+        ]
     }
 };
 
@@ -39,7 +40,7 @@ sub _check_params_or_die {
     }
 }
 
-sub _count_cvterm_ok {
+sub _count_cvterm {
     my ($class) = @_;
     return sub {
         my ( $schema, $param, $msg ) = @_;
@@ -61,7 +62,7 @@ sub _count_cvterm_ok {
     };
 }
 
-sub _count_synonym_ok {
+sub _count_synonym {
     my ($class) = @_;
     return sub {
         my ( $schema, $param, $msg ) = @_;
@@ -85,7 +86,7 @@ sub _count_synonym_ok {
     };
 }
 
-sub _count_alt_id_ok {
+sub _count_alt_id {
     my ($class) = @_;
     return sub {
         my ( $schema, $param, $msg ) = @_;
@@ -109,7 +110,7 @@ sub _count_alt_id_ok {
     };
 }
 
-sub _count_subject_ok {
+sub _count_subject {
     my ($class) = @_;
     return sub {
         my ( $schema, $param, $msg ) = @_;
@@ -143,7 +144,7 @@ sub _count_subject_ok {
     };
 }
 
-sub _count_object_ok {
+sub _count_object {
     my ($class) = @_;
     return sub {
         my ( $schema, $param, $msg ) = @_;
@@ -336,12 +337,12 @@ sub _has_relationship {
         my $count = $schema->resultset($result_class)->count(
             'object.name'  => $param->{object},
             'subject.name' => $param->{subject},
-            'type.name'    => $param->{relationship};
-        }, { join => [ 'subject', 'object', 'type' ] }
+            'type.name'    => $param->{relationship},
+            { join => [ 'subject', 'object', 'type' ] }
         );
-    $test_builder->ok( $count, $msg );
-    return $count;
-}
+        $test_builder->ok( $count, $msg );
+        return $count;
+        }
 }
 
 sub _is_related {
@@ -362,15 +363,17 @@ sub _is_related {
         }
 
         my $count = $schema->resultset($result_class)->count(
-            'object.name'  => $param->{object},
-            'subject.name' => $param->{subject},
-            ;
-        }, { join => [ 'subject', 'object' ] }
+            {   'object.name'  => $param->{object},
+                'subject.name' => $param->{subject}
+            },
+            { join => [ 'subject', 'object' ] }
         );
-    $test_builder->ok( $count, $msg );
-    return $count;
+        $test_builder->ok( $count, $msg );
+        return $count;
+        }
 }
-}
+
+1;
 
 =head1 API
 
