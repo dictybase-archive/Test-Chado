@@ -10,6 +10,7 @@ use Sub::Exporter -setup => {
         'count_alt_id_ok'  => \&_count_alt_id,
         'count_subject_ok' => \&_count_subject,
         'count_object_ok'  => \&_count_object,
+        'count_comment_ok' => \&_count_comment,
         'has_synonym'      => \&_has_synonym,
         'has_alt_id'       => \&_has_alt_id,
         'has_comment'      => \&_has_comment,
@@ -18,7 +19,7 @@ use Sub::Exporter -setup => {
     },
     groups => {
         'default' => [
-            qw/count_alt_id_ok count_cvterm_ok count_synonym_ok count_subject_ok count_object_ok/
+            qw/count_alt_id_ok count_cvterm_ok count_synonym_ok count_subject_ok count_object_ok count_comment_ok/
         ]
     }
 };
@@ -62,6 +63,33 @@ sub _count_cvterm {
     };
 }
 
+sub _count_comment {
+    my ($class) = @_;
+    return sub {
+        my ( $schema, $param, $msg ) = @_;
+        my $test_builder = $class->test_builder;
+        $test_builder->croak('need a schema') if !$schema;
+        $test_builder->croak('need options')  if !$param;
+        $class->_check_params_or_die( [qw/cv count/], $param );
+
+        my $result_class;
+        if ( $schema->isa('Bio::Chado::Schema') ) {
+            $result_class = 'Cv::Cvtermprop';
+        }
+        else {
+            $result_class = 'Cvtermprop';
+        }
+        my $count = $schema->resultset($result_class)->count(
+            {   'cv.name'   => $param->{cv},
+                'cv_2.name' => 'cvterm_property_type',
+                'type.name' => 'comment'
+            },
+            { join => [ { 'cvterm' => 'cv' }, { 'type' => 'cv' } ] }
+        );
+        return $test_builder->is_num( $count, $param->{count}, $msg );
+    };
+}
+
 sub _count_synonym {
     my ($class) = @_;
     return sub {
@@ -93,21 +121,24 @@ sub _count_alt_id {
         my $test_builder = $class->test_builder;
         $test_builder->croak('need a schema') if !$schema;
         $test_builder->croak('need options')  if !$param;
-        $class->_check_params_or_die( [qw/cv count/], $param );
+        $class->_check_params_or_die( [qw/cv count db/], $param );
 
         my $result_class;
         if ( $schema->isa('Bio::Chado::Schema') ) {
-            $result_class = 'General::Dbxref';
+            $result_class = 'Cv::CvtermDbxref';
         }
         else {
-            $result_class = 'Dbxref';
+            $result_class = 'CvtermDbxref';
         }
-        my $count
-            = $schema->resultset($result_class)
-            ->count( { 'cv.name' => $param->{cv} },
-            { join => { 'cvterm_dbxrefs' => { 'cvterm' => 'cv' } } } );
+        my $count = $schema->resultset($result_class)->count(
+            {   'cv.name' => $param->{cv},
+                'db.name' => [ $param->{db}, $param->{cv} ]
+            },
+            { join => [ { 'cvterm' => 'cv' }, { 'dbxref' => 'db' } ] }
+        );
         return $test_builder->is_num( $count, $param->{count}, $msg );
     };
+
 }
 
 sub _count_subject {
@@ -134,12 +165,10 @@ sub _count_subject {
             'object.name' => $param->{object},
             'type.name'   => $param->{relationship}
             }
-            : {
-            'cv.name'     => $param->{cv},
-            'object.name' => $param->{object}
-            };
+            : { 'object.name' => $param->{object},
+            'cv.name' => $param->{cv} };
         my $count = $schema->resultset($result_class)
-            ->count( $query, { join => [qw/object type/] } );
+            ->count( $query, { join => [ { 'object' => 'cv' }, 'type' ] } );
         return $test_builder->is_num( $count, $param->{count}, $msg );
     };
 }
@@ -151,7 +180,7 @@ sub _count_object {
         my $test_builder = $class->test_builder;
         $test_builder->croak('need a schema') if !$schema;
         $test_builder->croak('need options')  if !$param;
-        $class->_check_params_or_die( [qw/cv subject count/], $param );
+        $class->_check_params_or_die( [qw/cv subject count /], $param );
 
         my $result_class;
         if ( $schema->isa('Bio::Chado::Schema') ) {
@@ -173,7 +202,7 @@ sub _count_object {
             'subject.name' => $param->{subject}
             };
         my $count = $schema->resultset($result_class)
-            ->count( $query, { join => [qw/subject type/] } );
+            ->count( $query, { join => [qw/subject type /] } );
         return $test_builder->is_num( $count, $param->{count}, $msg );
     };
 }
@@ -185,7 +214,7 @@ sub _has_cvterm_synonym {
         my $test_builder = $class->test_builder;
         $test_builder->croak('need a schema') if !$schema;
         $test_builder->croak('need options')  if !$param;
-        $class->_check_params_or_die( [qw/cv term synonym/], $param );
+        $class->_check_params_or_die( [qw/cv term synonym /], $param );
 
         my $result_class;
         if ( $schema->isa('Bio::Chado::Schema') ) {
@@ -201,7 +230,12 @@ sub _has_cvterm_synonym {
                 {   'cv.name'              => $param->{name},
                     'name'                 => $param->{term},
                     'cvtermsynonyms.value' => $param->{synonym},
-                    'type.name' => { -in => [qw/BROAD EXACT NARROW RELATED/] }
+                    'type.name'            => {
+                        -in => [
+                            qw/ BROAD EXACT NARROW RELATED
+                                /
+                        ]
+                    }
                 },
                 { join => [ 'cv', { 'cvtermsynonyms' => 'type' } ] }
             );
@@ -210,7 +244,12 @@ sub _has_cvterm_synonym {
             $count = $schema->resultset($result_class)->count(
                 {   'name'                 => $param->{term},
                     'cvtermsynonyms.value' => $param->{synonym},
-                    'type.name' => { -in => [qw/BROAD EXACT NARROW RELATED/] }
+                    'type.name'            => {
+                        -in => [
+                            qw/ BROAD EXACT NARROW RELATED
+                                /
+                        ]
+                    }
                 },
                 { join => [ { 'cvtermsynonyms' => 'type' } ] }
             );
@@ -227,7 +266,7 @@ sub _has_alt_id {
         my $test_builder = $class->test_builder;
         $test_builder->croak('need a schema') if !$schema;
         $test_builder->croak('need options')  if !$param;
-        $class->_check_params_or_die( [qw/cv term alt_id/], $param );
+        $class->_check_params_or_die( [qw/cv term alt_id /], $param );
 
         my $result_class;
         if ( $schema->isa('Bio::Chado::Schema') ) {
@@ -269,7 +308,7 @@ sub _has_comment {
         my $test_builder = $class->test_builder;
         $test_builder->croak('need a schema') if !$schema;
         $test_builder->croak('need options')  if !$param;
-        $class->_check_params_or_die( [qw/cv term comment/], $param );
+        $class->_check_params_or_die( [qw/cv term comment /], $param );
 
         my $result_class;
         if ( $schema->isa('Bio::Chado::Schema') ) {
@@ -323,7 +362,7 @@ sub _has_relationship {
         my $test_builder = $class->test_builder;
         $test_builder->croak('need a schema') if !$schema;
         $test_builder->croak('need options')  if !$param;
-        $class->_check_params_or_die( [qw/object subject relationship/],
+        $class->_check_params_or_die( [qw/object subject relationship /],
             $param );
 
         my $result_class;
@@ -352,7 +391,7 @@ sub _is_related {
         my $test_builder = $class->test_builder;
         $test_builder->croak('need a schema') if !$schema;
         $test_builder->croak('need options')  if !$param;
-        $class->_check_params_or_die( [qw/object subject/], $param );
+        $class->_check_params_or_die( [qw/object subject /], $param );
 
         my $result_class;
         if ( $schema->isa('Bio::Chado::Schema') ) {
@@ -409,9 +448,23 @@ B<count>: Expected number of cvterms in that cv
 
 Identical parameters as B<count_cvterm_ok>
 
-=item count_alt_id_ok(L<DBIx::Class::Schema>, \%expected, [description])
+=item count_comment_ok(L<DBIx::Class::Schema>, \%expected, [description])
 
 Identical parameters as B<count_cvterm_ok>
+
+=item count_alt_id_ok(L<DBIx::Class::Schema>, \%expected, [description])
+
+=over
+
+=item B<parameters>
+
+B<cv>: Name of the cv.
+
+B<count>: Expected number of alt_ids
+
+B<db>: Database namespace in which the alternate ids belongs to. Both cv and db namespaces will be used for counting.
+
+=back
 
 =item count_subject_ok(L<DBIx::Class::Schema>, \%expected, [description])
 
