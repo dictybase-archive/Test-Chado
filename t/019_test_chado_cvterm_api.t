@@ -6,26 +6,69 @@ use File::ShareDir qw/module_file/;
 
 use_ok 'Test::Chado::Cvterm';
 
-my $preset = module_file( 'Test::Chado', 'cvpreset.tar.bz2' );
+my $preset = module_file( 'Test::Chado', 'eco.tar.bz2' );
 
 subtest 'features of count api' => sub {
-    my $schema = chado_schema( load_fixture => 1 );
+    my $schema = chado_schema( custom_fixture => $preset );
     dies_ok { count_cvterm_ok() } 'should die without schema';
     dies_ok { count_cvterm_ok($schema) } 'should die without parameters';
-    dies_ok { count_cvterm_ok($schema, {'cv' => 'cv_property'}) } 'should die without all arguments';
+    dies_ok { count_cvterm_ok( $schema, { 'cv' => 'cv_property' } ) }
+    'should die without all arguments';
 
-    my $desc = 'should have 286 cvterms';
+    my $desc = 'should have 299 cvterms';
     check_test(
-        sub { count_cvterm_ok( $schema, {'cv' => 'sequence', 'count' => 286}, $desc )},
+        sub {
+            count_cvterm_ok( $schema, { 'cv' => 'eco', 'count' => 299 },
+                $desc );
+        },
         {   ok   => 1,
             name => $desc
         },
         $desc
     );
 
-    $desc = 'should have 3266 synonyms';
+    $desc = 'should have 213 synonyms';
     check_test(
-        sub { count_synonym_ok( $schema, {'cv' => 'sequence', 'count' => 3266}, $desc )},
+        sub {
+            count_synonym_ok( $schema, { 'cv' => 'eco', 'count' => 213 },
+                $desc );
+        },
+        {   ok   => 1,
+            name => $desc
+        },
+        $desc
+    );
+
+    $desc = 'should have 7 alt_ids';
+    check_test(
+        sub {
+            count_alt_id_ok( $schema,
+                { 'cv' => 'eco', 'count' => 7, db => 'ECO' }, $desc );
+        },
+        {   ok   => 1,
+            name => $desc
+        },
+        $desc
+    );
+
+    $desc = 'should have 68 comments';
+    check_test(
+        sub {
+            count_comment_ok( $schema, { 'cv' => 'eco', 'count' => 68 },
+                $desc );
+        },
+        {   ok   => 1,
+            name => $desc
+        },
+        $desc
+    );
+
+    $desc = 'should have 14 subjects';
+    check_test(
+        sub {
+            count_subject_ok( $schema, { 'cv' => 'eco', 'count' => 14, object => 'direct assay evidence', 'relationship' => 'is_a' },
+                $desc );
+        },
         {   ok   => 1,
             name => $desc
         },
