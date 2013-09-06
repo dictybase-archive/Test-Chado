@@ -4,7 +4,7 @@ Test::Chado - Unit testing for chado database modules and applications
 
 # VERSION
 
-version 1.0.0
+version v1.2.0
 
 # SYNOPSIS
 

@@ -33,7 +33,9 @@ has 'dynamic_schema' => (
                 sub { return $self->dbmanager->dbh } );
         }
         else {
-            return $self->schema;
+            my $schema = $self->schema;
+            $schema->unregister_source('Sequence::Cvtermsynonym');
+            return $schema;
         }
     }
 );
