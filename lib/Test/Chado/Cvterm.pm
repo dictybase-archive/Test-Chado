@@ -15,17 +15,18 @@ use Sub::Exporter -setup => {
         'has_alt_id'       => \&_has_alt_id,
         'has_comment'      => \&_has_comment,
         'has_relationship' => \&_has_relationship,
-        'is_related'       => \&_is_subject,
+        'has_xref'         => \&_has_xref,
+        'is_related'       => \&_is_related,
     },
     groups => {
         'count' => [
             qw/count_alt_id_ok count_cvterm_ok count_synonym_ok count_subject_ok count_object_ok count_comment_ok/
         ],
         'check' => [
-            qw/has_synonym has_alt_id has_comment has_relationship is_related/
+            qw/has_synonym has_alt_id has_comment has_relationship is_related has_xref/
         ],
-        'relationship' =>
-            [qw/count_object_ok count_subject_ok has_relationship is_related/]
+        'relationship' => [
+            qw/count_object_ok count_subject_ok has_relationship is_related/]
     }
 };
 
@@ -221,7 +222,7 @@ sub _has_synonym {
         my $test_builder = $class->test_builder;
         $test_builder->croak('need a schema') if !$schema;
         $test_builder->croak('need options')  if !$param;
-        $class->_check_params_or_die( [qw/cv term synonym /], $param );
+        $class->_check_params_or_die( [qw/cv term synonym/], $param );
 
         my $result_class;
         if ( $schema->isa('Bio::Chado::Schema') ) {
@@ -234,29 +235,19 @@ sub _has_synonym {
         my $count;
         if ( defined $param->{cv} ) {
             $count = $schema->resultset($result_class)->count(
-                {   'cv.name'              => $param->{name},
-                    'name'                 => $param->{term},
-                    'cvtermsynonyms.value' => $param->{synonym},
-                    'type.name'            => {
-                        -in => [
-                            qw/ BROAD EXACT NARROW RELATED
-                                /
-                        ]
-                    }
+                {   'cv.name'                => $param->{cv},
+                    'me.name'                => $param->{term},
+                    'cvtermsynonyms.synonym' => $param->{synonym},
+                    'type.name' => { -in => [qw/BROAD EXACT NARROW RELATED/] }
                 },
                 { join => [ 'cv', { 'cvtermsynonyms' => 'type' } ] }
             );
         }
         else {
             $count = $schema->resultset($result_class)->count(
-                {   'name'                 => $param->{term},
-                    'cvtermsynonyms.value' => $param->{synonym},
-                    'type.name'            => {
-                        -in => [
-                            qw/ BROAD EXACT NARROW RELATED
-                                /
-                        ]
-                    }
+                {   'me.name'                => $param->{term},
+                    'cvtermsynonyms.synonym' => $param->{synonym},
+                    'type.name' => { -in => [qw/BROAD EXACT NARROW RELATED/] }
                 },
                 { join => [ { 'cvtermsynonyms' => 'type' } ] }
             );
@@ -273,7 +264,7 @@ sub _has_alt_id {
         my $test_builder = $class->test_builder;
         $test_builder->croak('need a schema') if !$schema;
         $test_builder->croak('need options')  if !$param;
-        $class->_check_params_or_die( [qw/cv term alt_id /], $param );
+        $class->_check_params_or_die( [qw/cv term alt_id/], $param );
 
         my $result_class;
         if ( $schema->isa('Bio::Chado::Schema') ) {
@@ -282,25 +273,91 @@ sub _has_alt_id {
         else {
             $result_class = 'Cvterm';
         }
+        my ( $db, $id );
+        if ( $param->{alt_id} =~ /:/ ) {
+            ( $db, $id ) = split /:/, $param->{alt_id}, 2;
+        }
+        else {
+            $db = $param->{cv};
+            $id = $param->{alt_id};
+        }
 
         my $count;
         if ( defined $param->{cv} ) {
             $count = $schema->resultset($result_class)->search(
-                {   'cv.name' => $param->{name},
-                    'name'    => $param->{term},
+                {   'cv.name' => $param->{cv},
+                    'me.name' => $param->{term},
                 },
                 { join => 'cv' }
-                )->search_related( 'cvterm_dbxrefs', {} )
-                ->count_related( 'dbxref',
-                { 'accession' => $param->{alt_id} } );
+                )->search_related( 'cvterm_dbxrefs', {} )->search_related(
+                'dbxref',
+                { 'accession' => $id, 'db.name' => $db },
+                { join        => 'db' }
+                )->count;
         }
         else {
             $count
                 = $schema->resultset($result_class)
-                ->search( { 'name' => $param->{term}, }, { join => 'cv' } )
-                ->search_related( 'cvterm_dbxrefs', {} )
-                ->count_related( 'dbxref',
-                { 'accession' => $param->{alt_id} } );
+                ->search( { 'name' => $param->{term} } )
+                ->search_related( 'cvterm_dbxrefs', {} )->search_related(
+                'dbxref',
+                { 'accession' => $id, 'db.name' => $db },
+                { join        => 'db' }
+                )->count;
+
+        }
+        $test_builder->ok( $count, $msg );
+        return $count;
+    };
+}
+
+sub _has_xref {
+    my ($class) = @_;
+    return sub {
+        my ( $schema, $param, $msg ) = @_;
+        my $test_builder = $class->test_builder;
+        $test_builder->croak('need a schema') if !$schema;
+        $test_builder->croak('need options')  if !$param;
+        $class->_check_params_or_die( [qw/cv term xref/], $param );
+
+        my $result_class;
+        if ( $schema->isa('Bio::Chado::Schema') ) {
+            $result_class = 'Cv::Cvterm';
+        }
+        else {
+            $result_class = 'Cvterm';
+        }
+        my ( $db, $id );
+        if ( $param->{xref} =~ /:/ ) {
+            ( $db, $id ) = split /:/, $param->{xref}, 2;
+        }
+        else {
+            $db = '_global';
+            $id = $param->{xref};
+        }
+
+        my $count;
+        if ( defined $param->{cv} ) {
+            $count = $schema->resultset($result_class)->search(
+                {   'cv.name' => $param->{cv},
+                    'me.name' => $param->{term},
+                },
+                { join => 'cv' }
+                )->search_related( 'cvterm_dbxrefs', {} )->search_related(
+                'dbxref',
+                { 'accession' => $id, 'db.name' => $db },
+                { join        => 'db' }
+                )->count;
+        }
+        else {
+            $count
+                = $schema->resultset($result_class)
+                ->search( { 'name' => $param->{term} } )
+                ->search_related( 'cvterm_dbxrefs', {} )->search_related(
+                'dbxref',
+                { 'accession' => $id, 'db.name' => $db },
+                { join        => 'db' }
+                )->count;
 
         }
         $test_builder->ok( $count, $msg );
@@ -315,7 +372,7 @@ sub _has_comment {
         my $test_builder = $class->test_builder;
         $test_builder->croak('need a schema') if !$schema;
         $test_builder->croak('need options')  if !$param;
-        $class->_check_params_or_die( [qw/cv term comment /], $param );
+        $class->_check_params_or_die( [qw/cv term comment/], $param );
 
         my $result_class;
         if ( $schema->isa('Bio::Chado::Schema') ) {
@@ -328,33 +385,30 @@ sub _has_comment {
         my $count;
         if ( $param->{cv} ) {
             $count = $schema->resultset($result_class)->search(
-                {   'cv.name' => $param->{name},
-                    'name'    => $param->{term},
+                {   'cv.name' => $param->{cv},
+                    'me.name' => $param->{term},
                 },
                 { join => 'cv' }
-                )->count_related(
+                )->search_related(
                 'cvtermprops',
                 {   'value'     => $param->{comment},
                     'type.name' => 'comment',
                     'cv_2.name' => 'cvterm_property_type'
                 },
                 { join => { 'type' => 'cv' } }
-                );
+                )->count;
         }
         else {
-            $count = $schema->resultset($result_class)->search(
-                {   'cv.name' => $param->{name},
-                    'name'    => $param->{term},
-                },
-                { join => 'cv' }
-                )->count_related(
+            $count
+                = $schema->resultset($result_class)
+                ->search( { 'name' => $param->{term}, }, )->search_related(
                 'cvtermprops',
                 {   'value'     => $param->{comment},
                     'type.name' => 'comment',
                     'cv_2.name' => 'cvterm_property_type'
                 },
                 { join => { 'type' => 'cv' } }
-                );
+                )->count;
 
         }
         $test_builder->ok( $count, $msg );
@@ -369,7 +423,7 @@ sub _has_relationship {
         my $test_builder = $class->test_builder;
         $test_builder->croak('need a schema') if !$schema;
         $test_builder->croak('need options')  if !$param;
-        $class->_check_params_or_die( [qw/object subject relationship /],
+        $class->_check_params_or_die( [qw/object subject relationship/],
             $param );
 
         my $result_class;
@@ -381,9 +435,10 @@ sub _has_relationship {
         }
 
         my $count = $schema->resultset($result_class)->count(
-            'object.name'  => $param->{object},
-            'subject.name' => $param->{subject},
-            'type.name'    => $param->{relationship},
+            {   'object.name'  => $param->{object},
+                'subject.name' => $param->{subject},
+                'type.name'    => $param->{relationship}
+            },
             { join => [ 'subject', 'object', 'type' ] }
         );
         $test_builder->ok( $count, $msg );
@@ -538,6 +593,22 @@ B<cv>: Name of the cv, optional.
 B<term>: Name of cvterm.
 
 B<alt_id>: Name of alternate id.
+
+=back
+
+=item has_xref(L<DBIx::Class::Schema>, \%expected, [description])
+
+Tests if a cvterm has a particular xref.
+
+=over
+
+=item B<parameters>
+
+B<cv>: Name of the cv, optional.
+
+B<term>: Name of cvterm.
+
+B<xref>: Name of alternate id.
 
 =back
 
