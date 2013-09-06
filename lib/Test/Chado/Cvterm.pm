@@ -18,9 +18,14 @@ use Sub::Exporter -setup => {
         'is_related'       => \&_is_subject,
     },
     groups => {
-        'default' => [
+        'count' => [
             qw/count_alt_id_ok count_cvterm_ok count_synonym_ok count_subject_ok count_object_ok count_comment_ok/
-        ]
+        ],
+        'check' => [
+            qw/has_synonym has_alt_id has_comment has_relationship is_related/
+        ],
+        'relationship' =>
+            [qw/count_object_ok count_subject_ok has_relationship is_related/]
     }
 };
 
@@ -165,8 +170,10 @@ sub _count_subject {
             'object.name' => $param->{object},
             'type.name'   => $param->{relationship}
             }
-            : { 'object.name' => $param->{object},
-            'cv.name' => $param->{cv} };
+            : {
+            'object.name' => $param->{object},
+            'cv.name'     => $param->{cv}
+            };
         my $count = $schema->resultset($result_class)
             ->count( $query, { join => [ { 'object' => 'cv' }, 'type' ] } );
         return $test_builder->is_num( $count, $param->{count}, $msg );
@@ -180,7 +187,7 @@ sub _count_object {
         my $test_builder = $class->test_builder;
         $test_builder->croak('need a schema') if !$schema;
         $test_builder->croak('need options')  if !$param;
-        $class->_check_params_or_die( [qw/cv subject count /], $param );
+        $class->_check_params_or_die( [qw/cv subject count/], $param );
 
         my $result_class;
         if ( $schema->isa('Bio::Chado::Schema') ) {
@@ -202,12 +209,12 @@ sub _count_object {
             'subject.name' => $param->{subject}
             };
         my $count = $schema->resultset($result_class)
-            ->count( $query, { join => [qw/subject type /] } );
+            ->count( $query, { join => [ { 'subject' => 'cv' }, 'type' ] } );
         return $test_builder->is_num( $count, $param->{count}, $msg );
     };
 }
 
-sub _has_cvterm_synonym {
+sub _has_synonym {
     my ($class) = @_;
     return sub {
         my ( $schema, $param, $msg ) = @_;
