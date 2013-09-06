@@ -2,3 +2,4 @@
 \b.carton/
 \b.fixtures/
 \b_build/
+\bfixture/

@@ -17,7 +17,7 @@ my %module_build_args = (
     "Siddhartha Basu <biosidd\@gmail.com>"
   ],
   "dist_name" => "Test-Chado",
-  "dist_version" => "1.0.0",
+  "dist_version" => "v1.2.0",
   "license" => "perl",
   "module_name" => "Test::Chado",
   "recommends" => {},
@@ -49,6 +49,7 @@ my %module_build_args = (
     "perl" => "5.010"
   },
   "script_files" => [
+    "bin/tc-populate-fixture",
     "bin/tc-prepare-fixture"
   ],
   "share_dir" => {
