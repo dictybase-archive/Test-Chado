@@ -1,4 +1,5 @@
 package Test::Chado;
+use feature qw/say/;
 use Test::Chado::Factory::DBManager;
 use Test::Chado::Factory::FixtureLoader;
 use Test::Chado::Types qw/MaybeFixtureLoader MaybeDbManager/;
@@ -6,53 +7,103 @@ use Types::Standard qw/Str Bool/;
 use Moo;
 use DBI;
 use MooX::ClassAttribute;
-use Getopt::Long;
 use Sub::Exporter -setup => {
-    exports => {
-        'chado_schema'       => \&_build_schema,
-        'drop_schema'        => \&_drop_schema,
-        'reload_schema'      => \&_reload_schema,
-        'set_fixture_loader' => \&_set_fixture_loader
-    },
+    exports => [
+        'chado_schema'                => \&_build_schema,
+        'drop_schema'                 => \&_drop_schema,
+        'reload_schema'               => \&_reload_schema,
+        'set_fixture_loader_type'     => \&_set_fixture_loader_type,
+        'get_fixture_loader_instance' => \&_get_fixture_loader_instance,
+        'set_fixture_loader_instance' => \&_set_dbmanager_instance,
+        'set_dbmanager_instance'      => \&_set_dbmanager_instance,
+        'get_dbmanager_instance'      => \&_get_dbmanager_instance,
+    ],
     groups => {
-        'default' =>
-            [qw/chado_schema reload_schema set_fixture_loader drop_schema/],
-        'schema' => [qw/chado_schema drop_schema reload_schema/]
+        'schema'  => [qw/chado_schema reload_schema drop_schema/],
+        'manager' => [
+            qw/get_fixture_loader_instance set_fixture_loader_instance
+                get_dbmanager_instance set_dbmanager_instance/
+        ]
     }
 };
 
-my %opt = ();
-GetOptions( \%opt, 'dsn:s', 'user:s', 'password:s', 'postgression',
-    'testpg' );
-
-class_has 'dbmanager_instance' => ( is => 'rw', isa => MaybeDbManager );
+class_has 'ignore_tc_env' => (
+    is => 'rw', isa => Bool, default => 0 , lazy => 1
+);
 
 class_has 'is_schema_loaded' =>
     ( is => 'rw', isa => Bool, default => 0, lazy => 1 );
 
-class_has 'fixture_loader_instance' => (
-    is  => 'rw',
-    isa => MaybeFixtureLoader,
+class_has '_fixture_loader_instance' => (
+    is      => 'rw',
+    isa     => MaybeFixtureLoader,
     clearer => 1
 );
 
-class_has 'fixture_loader' =>
+class_has '_dbmanager_instance' => (
+    is      => 'rw',
+    isa     => MaybeDbManager,
+    clearer => 1
+);
+
+class_has '_fixture_loader_type' =>
     ( is => 'rw', isa => Str, default => 'preset', lazy => 1 );
 
-sub _set_fixture_loader {
+sub _set_fixture_loader_type {
     my ($class) = @_;
     return sub {
         my ($arg) = @_;
         if ($arg) {
-            $class->fixture_loader($arg);
+            $class->_fixture_loader_type($arg);
         }
+    };
+}
+
+sub _set_fixture_loader_instance {
+    my ($class) = @_;
+    return sub {
+        my ($arg) = @_;
+        if ($arg) {
+            $class->_fixture_loader_instance($arg);
+        }
+    };
+}
+
+sub _get_fixture_loader_instance {
+    my ($class) = @_;
+    return sub {
+        my $fixture_loader = $class->_fixture_loader_instance;
+        die "fixture loader is not initiated !!!\n" if !$fixture_loader;
+        return $fixture_loader;
+    };
+}
+
+sub _set_dbmanager_instance {
+    my ($class) = @_;
+    return sub {
+        my ($arg) = @_;
+        if ($arg) {
+            $class->_dbmanager_instance($arg);
+        }
+    };
+}
+
+sub _get_dbmanager_instance {
+    my ($class) = @_;
+    return sub {
+        my $dbmanager = $class->_dbmanager_instance;
+        die "dbmanager is not initiated !!!\n" if !$dbmanager;
+        return $dbmanager;
     };
 }
 
 sub _reload_schema {
     my ($class) = @_;
     return sub {
-        my $fixture_loader = $class->get_fixture_loader;
+        my $fixture_loader
+            = $class->_fixture_loader_instance
+            ? $class->_fixture_loader_instance
+            : $class->_prepare_fixture_loader_instance;
         $fixture_loader->dbmanager->reset_schema;
         $class->is_schema_loaded(1);
     };
@@ -61,10 +112,13 @@ sub _reload_schema {
 sub _drop_schema {
     my ($class) = @_;
     return sub {
-        my $fixture_loader = $class->get_fixture_loader;
+        my $fixture_loader
+            = $class->_fixture_loader_instance
+            ? $class->_fixture_loader_instance
+            : $class->_prepare_fixture_loader_instance;
         $fixture_loader->dbmanager->drop_schema;
         $class->is_schema_loaded(0);
-        $class->clear_fixture_loader_instance;
+        $class->_clear_fixture_loader_instance;
     };
 }
 
@@ -72,7 +126,11 @@ sub _build_schema {
     my ($class) = @_;
     return sub {
         my (%arg) = @_;
-        my $fixture_loader = $class->get_fixture_loader;
+        my $fixture_loader
+            = $class->_fixture_loader_instance
+            ? $class->_fixture_loader_instance
+            : $class->_prepare_fixture_loader_instance;
+
         if ( !$class->is_schema_loaded ) {
             $fixture_loader->dbmanager->deploy_schema;
             $class->is_schema_loaded(1);
@@ -80,7 +138,7 @@ sub _build_schema {
         if ( defined $arg{'custom_fixture'} ) {
             die
                 "only **preset** fixture loader can be used with custom_fixture\n"
-                if $class->fixture_loader ne 'preset';
+                if $class->_fixture_loader_type ne 'preset';
             $fixture_loader->load_custom_fixtures( $arg{'custom_fixture'} );
             return $fixture_loader->dynamic_schema;
         }
@@ -91,40 +149,48 @@ sub _build_schema {
     };
 }
 
-sub get_fixture_loader {
+sub _prepare_fixture_loader_instance {
     my ($class) = @_;
-    if ( !$class->fixture_loader_instance ) {
-        my ( $loader, $dbmanager );
-        if ( exists $opt{postgression} ) {
-            $dbmanager = Test::Chado::Factory::DBManager->get_instance(
-                'postgression');
-        }
-        elsif ( exists $opt{testpg} ) {
-            $dbmanager
-                = Test::Chado::Factory::DBManager->get_instance('testpg');
-        }
-        elsif ( defined $opt{dsn} ) {
-            my ( $scheme, $driver, $attr_str, $attr_hash, $driver_dsn )
-                = DBI->parse_dsn( $opt{dsn} );
-            $dbmanager
-                = Test::Chado::Factory::DBManager->get_instance($driver);
-            $dbmanager->dsn( $opt{dsn} );
-            $dbmanager->user( $opt{user} )         if defined $opt{user};
-            $dbmanager->password( $opt{password} ) if defined $opt{password};
-        }
-        else {
-            $dbmanager
-                = $class->dbmanager_instance
-                ? $class->dbmanager_instance
-                : Test::Chado::Factory::DBManager->get_instance('sqlite');
-        }
-
-        $loader = Test::Chado::Factory::FixtureLoader->get_instance(
-            $class->fixture_loader );
-        $loader->dbmanager($dbmanager);
-        $class->fixture_loader_instance($loader);
+    my ( $loader, $dbmanager );
+    if ($class->ignore_tc_env) {
+        $dbmanager
+            = $class->_prepare_default_dbmanager;
     }
-    return $class->fixture_loader_instance;
+    elsif ( exists $ENV{TC_POSTGRESSION} ) {
+        $dbmanager
+            = Test::Chado::Factory::DBManager->get_instance('postgression');
+    }
+    elsif ( exists $ENV{TC_TESTPG} ) {
+        $dbmanager = Test::Chado::Factory::DBManager->get_instance('testpg');
+    }
+    elsif ( defined $ENV{TC_DSN} ) {
+        my ( $scheme, $driver, $attr_str, $attr_hash, $driver_dsn )
+            = DBI->parse_dsn( $ENV{TC_DSN} );
+        $dbmanager = Test::Chado::Factory::DBManager->get_instance($driver);
+        $dbmanager->dsn( $ENV{TC_DSN} );
+        $dbmanager->user( $ENV{TC_USER} )     if defined $ENV{TC_USER};
+        $dbmanager->password( $ENV{TC_PASS} ) if defined $ENV{TC_PASS};
+    }
+    else {
+        $dbmanager
+            = $class->_prepare_default_dbmanager;
+    }
+
+    $loader = Test::Chado::Factory::FixtureLoader->get_instance(
+        $class->_fixture_loader_type );
+    $loader->dbmanager($dbmanager);
+    $class->_dbmanager_instance($dbmanager);
+    $class->_fixture_loader_instance($loader);
+    return $loader;
+}
+
+sub _prepare_default_dbmanager {
+    my ($class) = @_;
+    return 
+            $class->_dbmanager_instance
+            ? $class->_dbmanager_instance
+            : Test::Chado::Factory::DBManager->get_instance('sqlite');
+
 }
 
 1;
@@ -206,31 +272,39 @@ Use the B<quick start> or pick any of the section below to start your testing. A
 
 =head1 API
 
-=head3 Attributes
+=head3 Methods
+
+All the methods are available as B<all> export group. There are two more export groups.
 
 =over
 
-=item B<dbmanager_instance>
+=item schema
 
-Instance of a backend manager that implements L<Test::Chado::Role::HasDBManager> role, currently either of Sqlite or Pg backend will be available.
+=over 
 
-=item B<is_schema_loaded>
+=item chado_schema
 
-Flag to check the loading status of chado schema
+=item reload_schema
 
-=item B<fixture_loader_instance>
-
-Insatnce of L<Test::Chado::FixtureLoader::Preset> by default.
-
-=item B<fixture_loader>
-
-Type of fixture loader, could be either of B<preset> and flatfile. By default it is B<preset>
+=item drop_schema
 
 =back
 
-=head3 Methods
+=item manager
 
-All the methods are available as exported subroutines by default
+=over 
+
+=item get_fixture_loader_instance
+
+=item set_fixture_loader_instance
+
+=item get_dbmanager_instance
+
+=item set_dbmanager_instance
+
+=back
+
+=back
 
 =over
 
@@ -265,12 +339,30 @@ I<custom_fixture> will take precedence.
 
 Drops and then reloads the schema.
 
-=item set_fixture_loader
+=item set_fixture_loader_type
 
 Sets the type of fixture loader backend it should use, either of B<preset> or B<flatfile>.
 
-=back
+=item get_dbmanager_instance
 
+Returns an instance of B<backend> class that implements the
+L<Test::Chado::Role::HasDBManager> Role. 
+
+=item set_dbmanager_instance
+
+Sets the dbmanager class that should implement L<Test::Chado::Role::HasDBManager> Role.
+
+=item get_fixture_loader_instance
+
+Returns an instance of B<fixture loader> class that implements the
+L<Test::Chado::Role::Helper::WithBcs> Role.
+
+=item set_fixture_loader_instance
+
+Sets B<fixture loader> class that should implement the
+L<Test::Chado::Role::Helper::WithBcs> Role.
+
+=back
 
 =head1 Build Status
 

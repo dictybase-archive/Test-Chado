@@ -5,30 +5,36 @@ use Test::DatabaseRow;
 use Module::Load qw/load/;
 use File::ShareDir qw/module_file/;
 use Class::Unload;
+use Module::Load qw/load/;
 
-use_ok 'Test::Chado';
+
+load Test::Chado, ':all'; 
+Test::Chado->ignore_tc_env(1);
 
 subtest 'schema management with default loader' => sub {
-    my $loader;
-    lives_ok { $loader = Test::Chado->get_fixture_loader }
+    dies_ok {get_dbmanager_instance()} 'should not return a dbmanager instance';
+    dies_ok {get_fixture_loader_instance()} 'should not return a fixture loader instance';
+
+    my ($loader,$dbmanager);
+    lives_ok { $loader = Test::Chado->_prepare_fixture_loader_instance }
     'should get default fixture loader';
+    lives_ok {$dbmanager = get_dbmanager_instance()} 'should get default dbmanager';
+    isa_ok($dbmanager,'Test::Chado::DBManager::Sqlite' );
+    isa_ok(get_fixture_loader_instance(),'Test::Chado::FixtureLoader::Preset' );
     isa_ok( $loader, 'Test::Chado::FixtureLoader::Preset' );
-    isa_ok(
-        Test::Chado->fixture_loader_instance,
-        'Test::Chado::FixtureLoader::Preset'
-    );
+
     my $schema;
     lives_ok { $schema = chado_schema() } 'should run chado_schema';
     isa_ok( $schema, 'DBIx::Class::Schema' );
 
-    my @row = $loader->dbmanager->dbh->selectrow_array(
+    my @row = $dbmanager->dbh->selectrow_array(
         "SELECT name FROM sqlite_master where
 	type = ? and tbl_name = ?", {}, qw/table feature/
     );
     ok( @row, "should have feature table after getting the schema instance" );
 
     lives_ok { drop_schema() } 'should run drop_schema';
-    my @row2 = $loader->dbmanager->dbh->selectrow_array(
+    my @row2 = $dbmanager->dbh->selectrow_array(
         "SELECT name FROM sqlite_master where
 	type = ? and tbl_name = ?", {}, qw/table feature/
     );
@@ -47,7 +53,7 @@ subtest 'schema and fixture managements with default loader' => sub {
 
     lives_ok { reload_schema() } 'should reloads the schema';
     my @row
-        = Test::Chado->fixture_loader_instance->dbmanager->dbh
+        = Test::Chado->_dbmanager_instance->dbh
         ->selectrow_array(
         "SELECT name FROM sqlite_master where
 	type = ? and tbl_name = ?", {}, qw/table feature/
@@ -58,35 +64,6 @@ subtest 'schema and fixture managements with default loader' => sub {
 
 };
 
-subtest 'schema and fixture managements through commandline arguments' =>
-    sub {
-    my $tmp = tmpnam();
-    my $dsn = "dbi:SQLite:dbname=$tmp";
-    local @ARGV = ( "--dsn", $dsn );
-
-    Class::Unload->unload('Test::Chado');
-    load 'Test::Chado';
-
-    lives_ok { Test::Chado->fixture_loader_instance(undef) }
-    'should wipe the fixture loader instance';
-    lives_ok { Test::Chado->is_schema_loaded(0) }
-    'should reset schema loading flag';
-
-    my $schema;
-    lives_ok { $schema = chado_schema( load_fixture => 1 ) }
-    'should run chado_schema with load_fixture';
-    isa_ok( $schema, 'DBIx::Class::Schema' );
-    isa_ok(
-        Test::Chado->fixture_loader_instance,
-        'Test::Chado::FixtureLoader::Preset'
-    );
-    is( Test::Chado->fixture_loader_instance->dbmanager->dsn,
-        $dsn, 'should match the dsn' );
-
-    lives_ok { drop_schema() } 'should run drop_schema';
-    lives_ok { reload_schema() } 'should run reload_schema';
-    };
-
 subtest 'loading custom schema with default loader' => sub {
     my $schema;
     my $preset = module_file( 'Test::Chado', 'cvpreset.tar.bz2' );
@@ -95,7 +72,7 @@ subtest 'loading custom schema with default loader' => sub {
     isa_ok( $schema, 'DBIx::Class::Schema' );
 
     local $Test::DatabaseRow::dbh
-        = Test::Chado->fixture_loader_instance->dbmanager->dbh;
+        = Test::Chado->_dbmanager_instance->dbh;
 
     row_ok(
         sql         => "SELECT * FROM cv where name = 'cv_property'",
@@ -108,3 +85,4 @@ subtest 'loading custom schema with default loader' => sub {
         description => 'should have 2 db table rows'
     );
 };
+

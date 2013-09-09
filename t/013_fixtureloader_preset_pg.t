@@ -16,7 +16,7 @@ SKIP: {
         my $dbmanager = Test::Chado::DBManager::Pg->new(
             dsn      => $ENV{TC_DSN},
             user     => $ENV{TC_USER},
-            password => $ENV{TC_PASSWORD}
+            password => $ENV{TC_PASS}
         );
 
         $dbmanager->deploy_schema;
@@ -64,7 +64,7 @@ SQL
         my $dbmanager = Test::Chado::DBManager::Pg->new(
             dsn      => $ENV{TC_DSN},
             user     => $ENV{TC_USER},
-            password => $ENV{TC_PASSWORD}
+            password => $ENV{TC_PASS}
         );
 
         $dbmanager->deploy_schema;

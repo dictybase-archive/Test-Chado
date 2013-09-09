@@ -9,7 +9,7 @@ perl:
 before_script:
  - createdb -U postgres test_chado
 script:
-   - perl Build.PL && ./Build && HARNESS_OPTIONS=j6 TC_DSN="dbi:Pg:dbname=test_chado" TC_USER="postgres" TC_PASSWORD="" cover -test
+   - perl Build.PL && ./Build && HARNESS_OPTIONS=j6 TC_DSN="dbi:Pg:dbname=test_chado" TC_USER="postgres" TC_PASS="" cover -test
 install: 
  - "sudo apt-get update"
  - "sudo apt-get install libdb-dev"

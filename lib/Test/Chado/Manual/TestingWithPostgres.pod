@@ -30,32 +30,30 @@ Overall, it's recommend to use a separate database and user to perform unit test
 
 =head4 Running tests
 
-It is done by passing the following options ...
+It is done by setting the following environmental variables ...
 
 =over
 
 =item 
 
-B<--dsn:> It is identical to perl L<DBI> option, should look like B<dbi:Pg:dbname=mydb;host=myhost;port=myport>
+B<TC_DSN:> It is identical to perl L<DBI> option, should look like B<dbi:Pg:dbname=mydb;host=myhost;port=myport>
 
 =item
 
-B<--user:> The username for connecting.
+B<TC_USER:> The username for connecting.
 
 =item
 
-B<--password:> The password for authentication, if any.
+B<TC_PASS:> The password for authentication, if any.
 
 =back
 
 
 Then run the usual way
 
-    prove --dsn "dbi:Pg:dbname=mydb;host=myhost;port=myport" --user myuser --password mypass t/test_chado.t
-
-    ./Build test --dsn "dbi:Pg:dbname=mydb;host=myhost;port=myport" --user myuser --password mypass
-
-    make test --dsn "dbi:Pg:dbname=mydb;host=myhost;port=myport" --user myuser --password mypass
+    TC_DSN="dbi:Pg:dbname=mydb;host=myhost;port=myport" TC_USER=myuser TC_PASS=mypass prove t/test_chado.t
+    TC_DSN="dbi:Pg:dbname=mydb;host=myhost;port=myport" TC_USER=myuser TC_PASS=mypass ./Build test
+    TC_DSN="dbi:Pg:dbname=mydb;host=myhost;port=myport" TC_USER=myuser TC_PASS=mypass make test
 
 
 =head3 Third party services
@@ -70,11 +68,9 @@ In fact the test suite of B<Test::Chado> itself is throughly tested with heroku 
 
 Run tests the usual way, no extra setup is neccessary ....
 
-    prove --dsn "dbi:Pg:dbname=herokudb;host=herokuhost" --user herokuuser --password herokupass t/test_chado.t
-
-    ./Build test "dbi:Pg:dbname=herokudb;host=herokuhost" --user herokuuser --password herokupass t/test_chado.t
-
-    make test --dsn "dbi:Pg:dbname=herokudb;host=herokuhost" --user herokuuser --password herokupass t/test_chado.t
+    TC_DSN="dbi:Pg:dbname=mydb;host=myhost;port=myport" TC_USER=herokuuser TC_PASS=herokupass prove t/test_chado.t
+    TC_DSN="dbi:Pg:dbname=mydb;host=myhost;port=myport" TC_USER=herokuuser TC_PASS=herokupass ./Build test
+    TC_DSN="dbi:Pg:dbname=mydb;host=myhost;port=myport" TC_USER=herokuuser TC_PASS=herokupass make test
 
 
 =head4 Postgression
@@ -84,10 +80,8 @@ database which stays available for next half an hour(30 mins). They have a limit
 The provided time and database instances should be more than enough to finish a good unit testing suite.
 Running unit tests is even easier, no database credential needs to be passed, B<Test::Chado> takes care of it.
 
-        prove --postgression t/test_chado.t
-
-        ./Build test --postgression
-
-        make test --postgression
+        TC_POSGRESSION=1 prove t/test_chado.t
+        TC_POSGRESSION=1 ./Build test 
+        TC_POSGRESSION=1 make test 
 
 

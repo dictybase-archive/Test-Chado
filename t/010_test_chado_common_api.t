@@ -1,8 +1,11 @@
 use Test::Tester;
 use Test::More qw/no_plan/;
 use Test::Exception;
-use Test::Chado;
+use Test::Chado qw(:schema);
 use Test::Chado::Common;
+
+
+Test::Chado->ignore_tc_env(1);
 
 subtest 'features of has_cv method' => sub {
     my $schema = chado_schema( load_fixture => 1 );
@@ -133,3 +136,5 @@ subtest 'features of has_featureloc method' => sub {
         { ok => 0, name => $desc }, $desc );
     drop_schema();
 };
+
+
