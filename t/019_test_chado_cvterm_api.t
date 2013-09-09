@@ -1,10 +1,12 @@
 use Test::Tester;
 use Test::More qw/no_plan/;
 use Test::Exception;
-use Test::Chado;
 use File::ShareDir qw/module_file/;
 use Module::Load qw/load/;
+use Test::Chado qw/:schema/;
 
+
+Test::Chado->ignore_tc_env(1);
 load Test::Chado::Cvterm, ':all';
 
 my $preset = module_file( 'Test::Chado', 'eco.tar.bz2' );

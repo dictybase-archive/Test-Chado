@@ -13,8 +13,7 @@ SKIP: {
 
     subtest 'schema and fixture managements with postgression' => sub {
 
-        local @ARGV = ("--postgression");
-        load Test::Chado, ':default';
+        load Test::Chado, ':all';
 
         my $sqla = SQL::Abstract->new;
 
@@ -22,14 +21,14 @@ SKIP: {
         lives_ok { $schema = chado_schema() } 'should run chado_schema';
         isa_ok( $schema, 'Bio::Chado::Schema' );
         isa_ok(
-            Test::Chado->get_fixture_loader->dbmanager,
+            get_dbmanager_instance(),
             'Test::Chado::DBManager::Postgression'
         );
 
         local $Test::DatabaseRow::dbh
-            = Test::Chado->get_fixture_loader->dbmanager->dbh;
+            = get_dbmanager_instance()->dbh;
         my $namespace
-            = Test::Chado->get_fixture_loader->dbmanager->schema_namespace;
+            = get_dbmanager_instance()->schema_namespace;
 
         row_ok(
             sql => [

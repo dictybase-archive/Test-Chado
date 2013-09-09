@@ -2,11 +2,13 @@ package ManageEnv;
 
 use Moo;
 use MooX::HandlesVia;
+use MooX::late;
 use Data::Perl qw/hash/;
+use Test::Chado::Types qw/HashiFied/;
 
 has 'tc_env' => (
     is          => 'rw',
-    isa         => 'Data::Perl::Collection::Hash',
+    isa         =>  HashiFied,
     handles_via => 'Data::Perl',
     lazy        => 1,
     clearer     => 1,

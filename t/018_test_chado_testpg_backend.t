@@ -12,16 +12,16 @@ SKIP: {
     subtest 'schema and fixture managements with testpg' => sub {
         local @ARGV = ('--testpg');
 
-        load Test::Chado, ':default';
+        load Test::Chado, ':all';
 
         my $schema;
         lives_ok { $schema = chado_schema() } 'should run chado_schema';
         isa_ok( $schema, 'Bio::Chado::Schema' );
-        isa_ok( Test::Chado->get_fixture_loader->dbmanager,
+        isa_ok( get_dbmanager_instance(),
             'Test::Chado::DBManager::Testpg' );
 
         local $Test::DatabaseRow::dbh
-            = Test::Chado->get_fixture_loader->dbmanager->dbh;
+            = get_dbmanager_instance()->dbh;
 
         my $sql = <<'SQL';
                SELECT reltype FROM pg_class where 
@@ -52,7 +52,7 @@ SQL
         lives_ok { reload_schema() } 'should reloads the schema';
 
         local $Test::DatabaseRow::dbh
-            = Test::Chado->get_fixture_loader->dbmanager->dbh;
+            = get_dbmanager_instance()->dbh;
 
          $sql = <<'SQL';
                SELECT reltype FROM pg_class where 
