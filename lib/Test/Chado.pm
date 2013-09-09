@@ -1,4 +1,5 @@
 package Test::Chado;
+use feature qw/say/;
 use Test::Chado::Factory::DBManager;
 use Test::Chado::Factory::FixtureLoader;
 use Test::Chado::Types qw/MaybeFixtureLoader MaybeDbManager/;
@@ -9,15 +10,15 @@ use MooX::ClassAttribute;
 use Getopt::Long;
 use Sub::Exporter -setup => {
     exports => {
-        'chado_schema'       => \&_build_schema,
-        'drop_schema'        => \&_drop_schema,
-        'reload_schema'      => \&_reload_schema,
-        'set_fixture_loader' => \&_set_fixture_loader
+        'chado_schema'           => \&_build_schema,
+        'drop_schema'            => \&_drop_schema,
+        'reload_schema'          => \&_reload_schema,
+        'set_fixture_loader'     => \&_set_fixture_loader,
+        'get_dbmanager_instance' => \&_get_dbmanager_instance
     },
     groups => {
-        'default' =>
-            [qw/chado_schema reload_schema drop_schema/],
-        'schema' => [qw/chado_schema drop_schema reload_schema/]
+        'default' => [qw/chado_schema reload_schema drop_schema/],
+        'schema'  => [qw/chado_schema drop_schema reload_schema/]
     }
 };
 
@@ -25,14 +26,12 @@ my %opt = ();
 GetOptions( \%opt, 'dsn:s', 'user:s', 'password:s', 'postgression',
     'testpg' );
 
-class_has 'dbmanager_instance' => ( is => 'rw', isa => MaybeDbManager );
-
 class_has 'is_schema_loaded' =>
     ( is => 'rw', isa => Bool, default => 0, lazy => 1 );
 
 class_has 'fixture_loader_instance' => (
-    is  => 'rw',
-    isa => MaybeFixtureLoader,
+    is      => 'rw',
+    isa     => MaybeFixtureLoader,
     clearer => 1
 );
 
@@ -46,6 +45,18 @@ sub _set_fixture_loader {
         if ($arg) {
             $class->fixture_loader($arg);
         }
+    };
+}
+
+sub _get_dbmanager_instance {
+    my ($class) = @_;
+    return sub {
+        my $fixture_loader = $class->fixture_loader;
+        if ( !$fixture_loader ) {
+            say 'schema instance is not initiated !!!';
+            die "use *chado_schema* api first\n";
+        }
+        return $fixture_loader->dbmanager;
     };
 }
 
@@ -268,6 +279,11 @@ Drops and then reloads the schema.
 =item set_fixture_loader
 
 Sets the type of fixture loader backend it should use, either of B<preset> or B<flatfile>.
+
+=item get_dbmanager_instance
+
+Returns an instance of B<backend> class that implements the
+L<Test::Chado::Role::HasDBManager> Role. 
 
 =back
 
