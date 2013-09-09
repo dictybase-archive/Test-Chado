@@ -4,7 +4,7 @@ Test::Chado - Unit testing for chado database modules and applications
 
 # VERSION
 
-version v1.2.0
+version v2.0.0
 
 # SYNOPSIS
 
@@ -71,27 +71,19 @@ Use the __quick start__ or pick any of the section below to start your testing. 
 
 # API
 
-### Attributes
-
-- __dbmanager\_instance__
-
-    Instance of a backend manager that implements [Test::Chado::Role::HasDBManager](http://search.cpan.org/perldoc?Test::Chado::Role::HasDBManager) role, currently either of Sqlite or Pg backend will be available.
-
-- __is\_schema\_loaded__
-
-    Flag to check the loading status of chado schema
-
-- __fixture\_loader\_instance__
-
-    Insatnce of [Test::Chado::FixtureLoader::Preset](http://search.cpan.org/perldoc?Test::Chado::FixtureLoader::Preset) by default.
-
-- __fixture\_loader__
-
-    Type of fixture loader, could be either of __preset__ and flatfile. By default it is __preset__
-
 ### Methods
 
-All the methods are available as exported subroutines by default
+All the methods are available as __all__ export group. There are two more export groups.
+
+- schema
+    - chado\_schema
+    - reload\_schema
+    - drop\_schema
+- manager
+    - get\_fixture\_loader\_instance
+    - set\_fixture\_loader\_instance
+    - get\_dbmanager\_instance
+    - set\_dbmanager\_instance
 
 - __chado\_schema(%options)__
 
@@ -114,9 +106,28 @@ All the methods are available as exported subroutines by default
 
     Drops and then reloads the schema.
 
-- set\_fixture\_loader
+- set\_fixture\_loader\_type
 
     Sets the type of fixture loader backend it should use, either of __preset__ or __flatfile__.
+
+- get\_dbmanager\_instance
+
+    Returns an instance of __backend__ class that implements the
+    [Test::Chado::Role::HasDBManager](http://search.cpan.org/perldoc?Test::Chado::Role::HasDBManager) Role. 
+
+- set\_dbmanager\_instance
+
+    Sets the dbmanager class that should implement [Test::Chado::Role::HasDBManager](http://search.cpan.org/perldoc?Test::Chado::Role::HasDBManager) Role.
+
+- get\_fixture\_loader\_instance
+
+    Returns an instance of __fixture loader__ class that implements the
+    [Test::Chado::Role::Helper::WithBcs](http://search.cpan.org/perldoc?Test::Chado::Role::Helper::WithBcs) Role.
+
+- set\_fixture\_loader\_instance
+
+    Sets __fixture loader__ class that should implement the
+    [Test::Chado::Role::Helper::WithBcs](http://search.cpan.org/perldoc?Test::Chado::Role::Helper::WithBcs) Role.
 
 # Build Status
 
