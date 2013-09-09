@@ -16,7 +16,7 @@ use Sub::Exporter -setup => {
     },
     groups => {
         'default' =>
-            [qw/chado_schema reload_schema set_fixture_loader drop_schema/],
+            [qw/chado_schema reload_schema drop_schema/],
         'schema' => [qw/chado_schema drop_schema reload_schema/]
     }
 };
