@@ -5,16 +5,11 @@ use Test::DatabaseRow;
 use Module::Load qw/load/;
 use File::ShareDir qw/module_file/;
 use Class::Unload;
-use FindBin qw($Bin);
 use Module::Load qw/load/;
-use lib "$Bin/lib";
-use ManageEnv;
 
-
-my $env = ManageEnv->new;
-$env->temp_clean_tc_env;
 
 load Test::Chado, ':all'; 
+Test::Chado->ignore_tc_env(1);
 
 subtest 'schema management with default loader' => sub {
     dies_ok {get_dbmanager_instance()} 'should not return a dbmanager instance';
@@ -91,4 +86,3 @@ subtest 'loading custom schema with default loader' => sub {
     );
 };
 
-$env->restore_tc_env;

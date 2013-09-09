@@ -16,7 +16,7 @@ use Sub::Exporter -setup => {
         'get_fixture_loader_instance' => \&_get_fixture_loader_instance,
         'set_fixture_loader_instance' => \&_set_dbmanager_instance,
         'set_dbmanager_instance'      => \&_set_dbmanager_instance,
-        'get_dbmanager_instance'      => \&_get_dbmanager_instance
+        'get_dbmanager_instance'      => \&_get_dbmanager_instance,
     ],
     groups => {
         'schema'  => [qw/chado_schema reload_schema drop_schema/],
@@ -26,6 +26,10 @@ use Sub::Exporter -setup => {
         ]
     }
 };
+
+class_has 'ignore_tc_env' => (
+    is => 'rw', isa => Bool, default => 0 , lazy => 1
+);
 
 class_has 'is_schema_loaded' =>
     ( is => 'rw', isa => Bool, default => 0, lazy => 1 );
@@ -148,7 +152,11 @@ sub _build_schema {
 sub _prepare_fixture_loader_instance {
     my ($class) = @_;
     my ( $loader, $dbmanager );
-    if ( exists $ENV{TC_POSTGRESSION} ) {
+    if ($class->ignore_tc_env) {
+        $dbmanager
+            = $class->_prepare_default_dbmanager;
+    }
+    elsif ( exists $ENV{TC_POSTGRESSION} ) {
         $dbmanager
             = Test::Chado::Factory::DBManager->get_instance('postgression');
     }
@@ -165,9 +173,7 @@ sub _prepare_fixture_loader_instance {
     }
     else {
         $dbmanager
-            = $class->_dbmanager_instance
-            ? $class->_dbmanager_instance
-            : Test::Chado::Factory::DBManager->get_instance('sqlite');
+            = $class->_prepare_default_dbmanager;
     }
 
     $loader = Test::Chado::Factory::FixtureLoader->get_instance(
@@ -176,6 +182,15 @@ sub _prepare_fixture_loader_instance {
     $class->_dbmanager_instance($dbmanager);
     $class->_fixture_loader_instance($loader);
     return $loader;
+}
+
+sub _prepare_default_dbmanager {
+    my ($class) = @_;
+    return 
+            $class->_dbmanager_instance
+            ? $class->_dbmanager_instance
+            : Test::Chado::Factory::DBManager->get_instance('sqlite');
+
 }
 
 1;
