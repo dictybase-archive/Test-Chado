@@ -16,7 +16,7 @@ SKIP: {
         my $dbmanager = Test::Chado::DBManager::Pg->new(
             dsn      => $ENV{TC_DSN},
             user     => $ENV{TC_USER},
-            password => $ENV{TC_PASSWORD}
+            password => $ENV{TC_PASS}
         );
 
         $dbmanager->deploy_schema;
@@ -54,7 +54,7 @@ SKIP: {
         my $dbmanager = Test::Chado::DBManager::Pg->new(
             dsn      => $ENV{TC_DSN},
             user     => $ENV{TC_USER},
-            password => $ENV{TC_PASSWORD}
+            password => $ENV{TC_PASS}
         );
         $dbmanager->deploy_schema;
         my $loader = Test::Chado::FixtureLoader::Flatfile->new(
@@ -101,7 +101,7 @@ SQL
         my $dbmanager = Test::Chado::DBManager::Pg->new(
             dsn      => $ENV{TC_DSN},
             user     => $ENV{TC_USER},
-            password => $ENV{TC_PASSWORD}
+            password => $ENV{TC_PASS}
         );
         $dbmanager->deploy_schema;
         my $loader = Test::Chado::FixtureLoader::Flatfile->new(
@@ -148,7 +148,7 @@ SQL
         my $dbmanager = Test::Chado::DBManager::Pg->new(
             dsn      => $ENV{TC_DSN},
             user     => $ENV{TC_USER},
-            password => $ENV{TC_PASSWORD}
+            password => $ENV{TC_PASS}
         );
         $dbmanager->deploy_schema;
         my $loader = Test::Chado::FixtureLoader::Flatfile->new(
@@ -192,7 +192,7 @@ SQL
         my $dbmanager = Test::Chado::DBManager::Pg->new(
             dsn      => $ENV{TC_DSN},
             user     => $ENV{TC_USER},
-            password => $ENV{TC_PASSWORD}
+            password => $ENV{TC_PASS}
         );
 
         $dbmanager->deploy_schema;

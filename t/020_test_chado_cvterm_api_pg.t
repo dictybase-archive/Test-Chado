@@ -10,12 +10,7 @@ SKIP: {
     eval { require DBD::Pg };
     skip 'DBD::Pg is needed to run this test' if $@;
 
-    local @ARGV = (
-        "--dsn", $ENV{TC_DSN}, "--password", $ENV{TC_PASSWORD}, "--user",
-        $ENV{TC_USER}
-    );
-
-    load Test::Chado, ':default';
+    load Test::Chado, ':schema';
     load Test::Chado::Cvterm, ':all';
 
     my $preset = module_file( 'Test::Chado', 'eco.tar.bz2' );

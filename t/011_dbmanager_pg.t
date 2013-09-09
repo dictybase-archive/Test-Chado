@@ -15,7 +15,7 @@ SKIP: {
 
     $pg->dsn( $ENV{TC_DSN} );
     $pg->user( $ENV{TC_USER} );
-    $pg->password( $ENV{TC_PASSWORD} );
+    $pg->password( $ENV{TC_PASS} );
 
     local $Test::DatabaseRow::dbh = $pg->dbh;
     my $sqla = SQL::Abstract->new;

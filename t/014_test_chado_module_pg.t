@@ -12,22 +12,18 @@ SKIP: {
     eval { require DBD::Pg };
     skip 'DBD::Pg is needed to run this test' if $@;
 
-    local @ARGV = (
-        "--dsn", $ENV{TC_DSN}, "--password", $ENV{TC_PASSWORD}, "--user",
-        $ENV{TC_USER}
-    );
     my $sqla = SQL::Abstract->new;
 
-    load Test::Chado, ':default';
+    load Test::Chado, ':all';
     subtest 'schema management with postgresql loader' => sub {
         my $schema;
         lives_ok { $schema = chado_schema() } 'should run chado_schema';
         isa_ok( $schema, 'Bio::Chado::Schema' );
 
         local $Test::DatabaseRow::dbh
-            = Test::Chado->get_fixture_loader->dbmanager->dbh;
+            = get_dbmanager_instance()->dbh;
         my $namespace
-            = Test::Chado->get_fixture_loader->dbmanager->schema_namespace;
+            = get_dbmanager_instance()->schema_namespace;
 
         row_ok(
             sql => [
@@ -72,9 +68,9 @@ SKIP: {
         lives_ok { reload_schema() } 'should reloads the schema';
 
         local $Test::DatabaseRow::dbh
-            = Test::Chado->get_fixture_loader->dbmanager->dbh;
+            = get_dbmanager_instance()->dbh;
         my $namespace
-            = Test::Chado->get_fixture_loader->dbmanager->schema_namespace;
+            = get_dbmanager_instance()->schema_namespace;
 
         row_ok(
             sql => [
@@ -106,7 +102,7 @@ SKIP: {
         isa_ok( $schema, 'DBIx::Class::Schema' );
 
         local $Test::DatabaseRow::dbh
-            = Test::Chado->fixture_loader_instance->dbmanager->dbh;
+            = get_dbmanager_instance()->dbh;
         is( $schema->resultset('Cv::Cv')->count( { name => 'cv_property' } ),
             1,
             'should have cv_property ontology'
