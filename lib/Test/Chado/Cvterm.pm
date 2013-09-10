@@ -5,28 +5,33 @@ use Test::Chado::Types qw/TB/;
 use Test::Builder;
 use Sub::Exporter -setup => {
     exports => {
-        'count_cvterm_ok'  => \&_count_cvterm,
-        'count_synonym_ok' => \&_count_synonym,
-        'count_alt_id_ok'  => \&_count_alt_id,
-        'count_subject_ok' => \&_count_subject,
-        'count_object_ok'  => \&_count_object,
-        'count_comment_ok' => \&_count_comment,
-        'has_synonym'      => \&_has_synonym,
-        'has_alt_id'       => \&_has_alt_id,
-        'has_comment'      => \&_has_comment,
-        'has_relationship' => \&_has_relationship,
-        'has_xref'         => \&_has_xref,
-        'is_related'       => \&_is_related,
+        'count_cvterm_ok'              => \&_count_cvterm,
+        'count_obsolete_cvterm_ok'     => \&_count_obsolete_cvterm,
+        'count_relationship_cvterm_ok' => \&_count_relationship_cvterm,
+        'count_synonym_ok'             => \&_count_synonym,
+        'count_alt_id_ok'              => \&_count_alt_id,
+        'count_subject_ok'             => \&_count_subject,
+        'count_object_ok'              => \&_count_object,
+        'count_comment_ok'             => \&_count_comment,
+        'has_synonym'                  => \&_has_synonym,
+        'has_alt_id'                   => \&_has_alt_id,
+        'has_comment'                  => \&_has_comment,
+        'has_relationship'             => \&_has_relationship,
+        'has_xref'                     => \&_has_xref,
+        'is_related'                   => \&_is_related,
+        'is_obsolete_cvterm'           => \&_is_obsolete_cvterm
     },
     groups => {
         'count' => [
-            qw/count_alt_id_ok count_cvterm_ok count_synonym_ok count_subject_ok count_object_ok count_comment_ok/
+            qw/count_alt_id_ok count_cvterm_ok count_synonym_ok count_subject_ok count_object_ok
+                count_comment_ok count_obsolete_cvterm_ok count_relationship_cvterm_ok/
         ],
         'check' => [
-            qw/has_synonym has_alt_id has_comment has_relationship is_related has_xref/
+            qw/has_synonym has_alt_id has_comment has_relationship is_related has_xref is_obsolete_term/
         ],
         'relationship' => [
-            qw/count_object_ok count_subject_ok has_relationship is_related/]
+            qw/count_object_ok count_subject_ok has_relationship is_related count_relationship_cvterm_ok/
+        ]
     }
 };
 
@@ -47,6 +52,34 @@ sub _check_params_or_die {
     }
 }
 
+sub _is_obsolete_cvterm {
+    my ($class) = @_;
+    return sub {
+        my ( $schema, $param, $msg ) = @_;
+        my $test_builder = $class->test_builder;
+        $test_builder->croak('need a schema') if !$schema;
+        $test_builder->croak('need options')  if !$param;
+        $class->_check_params_or_die( [qw/cv term/], $param );
+
+        my $result_class;
+        if ( $schema->isa('Bio::Chado::Schema') ) {
+            $result_class = 'Cv::Cvterm';
+        }
+        else {
+            $result_class = 'Cvterm';
+        }
+        my $count = $schema->resultset($result_class)->count(
+            {   'cv.name'     => $param->{cv},
+                'is_obsolete' => 1,
+                'me.name'     => $param->{term}
+            },
+            { join => 'cv' }
+        );
+        $test_builder->ok( $count, $msg );
+        return $count;
+    };
+}
+
 sub _count_cvterm {
     my ($class) = @_;
     return sub {
@@ -63,8 +96,67 @@ sub _count_cvterm {
         else {
             $result_class = 'Cvterm';
         }
-        my $count = $schema->resultset($result_class)
-            ->count( { 'cv.name' => $param->{cv} }, { join => 'cv' } );
+        my $count = $schema->resultset($result_class)->count(
+            {   'cv.name'             => $param->{cv},
+                'is_obsolete'         => 0,
+                'is_relationshiptype' => 0
+            },
+            { join => 'cv' }
+        );
+        return $test_builder->is_num( $count, $param->{count}, $msg );
+    };
+}
+
+sub _count_obsolete_cvterm {
+    my ($class) = @_;
+    return sub {
+        my ( $schema, $param, $msg ) = @_;
+        my $test_builder = $class->test_builder;
+        $test_builder->croak('need a schema') if !$schema;
+        $test_builder->croak('need options')  if !$param;
+        $class->_check_params_or_die( [qw/cv count/], $param );
+
+        my $result_class;
+        if ( $schema->isa('Bio::Chado::Schema') ) {
+            $result_class = 'Cv::Cvterm';
+        }
+        else {
+            $result_class = 'Cvterm';
+        }
+        my $count = $schema->resultset($result_class)->count(
+            {   'cv.name'     => $param->{cv},
+                'is_obsolete' => 1,
+            },
+            { join => 'cv' }
+        );
+        return $test_builder->is_num( $count, $param->{count}, $msg );
+    };
+}
+
+sub _count_relationship_cvterm {
+    my ($class) = @_;
+    return sub {
+        my ( $schema, $param, $msg ) = @_;
+        my $test_builder = $class->test_builder;
+        $test_builder->croak('need a schema') if !$schema;
+        $test_builder->croak('need options')  if !$param;
+        $class->_check_params_or_die( [qw/cv count/], $param );
+
+        my $result_class;
+        if ( $schema->isa('Bio::Chado::Schema') ) {
+            $result_class = 'Cv::Cvterm';
+        }
+        else {
+            $result_class = 'Cvterm';
+        }
+        my $count = $schema->resultset($result_class)->count(
+            {   'cv.name'             => $param->{cv},
+                'is_relationshiptype' => 1,
+                'is_obsolete'         => 0,
+                'me.name'             => { -not_in => 'is_a' }
+            },
+            { join => 'cv' }
+        );
         return $test_builder->is_num( $count, $param->{count}, $msg );
     };
 }
@@ -175,7 +267,8 @@ sub _count_subject {
             'object.name' => $param->{object},
             'cv.name'     => $param->{cv}
             };
-        my $count = $schema->resultset($result_class)
+        my $count
+            = $schema->resultset($result_class)
             ->count( $query, { join => [ { 'object' => 'cv' }, 'type' ] } );
         return $test_builder->is_num( $count, $param->{count}, $msg );
     };
@@ -209,7 +302,8 @@ sub _count_object {
             'cv.name'      => $param->{cv},
             'subject.name' => $param->{subject}
             };
-        my $count = $schema->resultset($result_class)
+        my $count
+            = $schema->resultset($result_class)
             ->count( $query, { join => [ { 'subject' => 'cv' }, 'type' ] } );
         return $test_builder->is_num( $count, $param->{count}, $msg );
     };
@@ -476,25 +570,90 @@ sub _is_related {
 
 1;
 
+=head1 NAME
+
+API for testing cvterm.
+
 =head1 API
 
-=head2 Methods
+=head2 Exported method groups
+
+There are three exported groups.  As usual, all methods could be exported by the special B<all> export group.
 
 =over
 
-=item
+=item B<count>
 
-All methods are available as exported subroutines by default
+=over
 
-=item
+=item count_cvterm_ok
 
-The first two parameters are manadotry.
+=item count_obsolete_cvterm_ok
+
+=item count_relationship_cvterm_ok
+
+=item count_alt_id_ok
+
+=item count_comment_ok 
+
+=item count_object_ok
+
+=item count_subject_ok
+
+=item count_synonym_ok
 
 =back
+
+=item B<check>
+
+=over
+
+=item has_synonym
+
+=item has_alt_id
+
+=item has_comment
+
+=item has_relationship
+
+=item is_related
+
+=item is_obsolete_cvterm
+
+=item has_xref
+
+=item has_synonym
+
+=back
+
+=item B<relationship>
+
+=over
+
+=item count_object_ok
+
+=item count_subject_ok
+
+=item has_relationship
+
+=item is_related
+
+=item count_relationship_cvterm_ok
+
+=back
+
+=back
+
+
+=head2 Methods
+
+Unless specified, all parameters are mandatory.
 
 =over
 
 =item count_cvterm_ok(L<DBIx::Class::Schema>, \%expected, [description])
+
+Tests for numbers of cvterms in an ontology excluding obsolete and relationship terms.
 
 =over
 
@@ -505,6 +664,16 @@ B<cv>: Name of the cv.
 B<count>: Expected number of cvterms in that cv
 
 =back
+
+=item count_obsolete_cvterm_ok(L<DBIx::Class::Schema>, \%expected, [description])
+
+Tests for numbers of obsolete cvterms.
+Identical parameters as B<count_cvterm_ok>
+
+=item count_relationship_cvterm_ok(L<DBIx::Class::Schema>, \%expected, [description])
+
+Tests for numbers of relationship cvterms excluding the built-ins and obsoletes.
+Identical parameters as B<count_cvterm_ok>
 
 =item count_synonym_ok(L<DBIx::Class::Schema>, \%expected, [description])
 
@@ -658,6 +827,18 @@ Tests if a parent has a particular child or vice versa.
 B<object>: Name of the parent term.
 
 B<subject>: Name of the child term.
+
+=item is_obsolete_cvterm(L<DBIx::Class::Schema>, \%expected, [description])
+
+Tests if an existing cvterm is obsolete
+
+=over
+
+=item B<parameters>
+
+B<cv>: Name of the cv.
+
+B<term>: Name of the obsolete term.
 
 =back
 
