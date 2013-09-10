@@ -189,6 +189,23 @@ SKIP: {
             $desc
         );
 
+        $desc = 'should have obsolete cvterm';
+        check_test(
+            sub {
+                is_obsolete_cvterm(
+                    $schema,
+                    {   'cv'   => 'eco',
+                        'term' => 'not_recorded'
+                    },
+                    $desc
+                );
+            },
+            {   ok   => 1,
+                name => $desc
+            },
+            $desc
+        );
+
         $desc = 'should have alt_id';
         check_test(
             sub {
