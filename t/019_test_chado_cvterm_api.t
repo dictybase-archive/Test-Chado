@@ -5,7 +5,6 @@ use File::ShareDir qw/module_file/;
 use Module::Load qw/load/;
 use Test::Chado qw/:schema/;
 
-
 Test::Chado->ignore_tc_env(1);
 load Test::Chado::Cvterm, ':all';
 
@@ -18,11 +17,35 @@ subtest 'features of count api' => sub {
     dies_ok { count_cvterm_ok( $schema, { 'cv' => 'cv_property' } ) }
     'should die without all arguments';
 
-    my $desc = 'should have 299 cvterms';
+    my $desc = 'should have 294 cvterms';
     check_test(
         sub {
-            count_cvterm_ok( $schema, { 'cv' => 'eco', 'count' => 299 },
+            count_cvterm_ok( $schema, { 'cv' => 'eco', 'count' => 294 },
                 $desc );
+        },
+        {   ok   => 1,
+            name => $desc
+        },
+        $desc
+    );
+
+    $desc = 'should have 3 obsolete cvterms';
+    check_test(
+        sub {
+            count_obsolete_cvterm_ok( $schema,
+                { 'cv' => 'eco', 'count' => 3 }, $desc );
+        },
+        {   ok   => 1,
+            name => $desc
+        },
+        $desc
+    );
+
+    $desc = 'should have 1 relationship cvterm';
+    check_test(
+        sub {
+            count_relationship_cvterm_ok( $schema,
+                { 'cv' => 'eco', 'count' => 1 }, $desc );
         },
         {   ok   => 1,
             name => $desc
