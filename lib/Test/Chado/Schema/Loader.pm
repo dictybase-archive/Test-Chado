@@ -6,7 +6,8 @@ __PACKAGE__->naming('current');
 __PACKAGE__->loader_options(
     rel_name_map => {
         'cvtermsynonym_cvterms' => 'cvtermsynonyms',
-        'cvtermprop_cvterms'    => 'cvtermprops'
+        'cvtermprop_cvterms'    => 'cvtermprops',
+        'phylotree_2' => 'phylotree_more'
     }
 );
 
