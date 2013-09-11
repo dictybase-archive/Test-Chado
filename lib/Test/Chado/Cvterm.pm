@@ -18,7 +18,6 @@ use Sub::Exporter -setup => {
         'has_comment'                  => \&_has_comment,
         'has_relationship'             => \&_has_relationship,
         'has_xref'                     => \&_has_xref,
-        'is_related'                   => \&_is_related,
         'is_obsolete_cvterm'           => \&_is_obsolete_cvterm
     },
     groups => {
@@ -540,34 +539,6 @@ sub _has_relationship {
         }
 }
 
-sub _is_related {
-    my ($class) = @_;
-    return sub {
-        my ( $schema, $param, $msg ) = @_;
-        my $test_builder = $class->test_builder;
-        $test_builder->croak('need a schema') if !$schema;
-        $test_builder->croak('need options')  if !$param;
-        $class->_check_params_or_die( [qw/object subject /], $param );
-
-        my $result_class;
-        if ( $schema->isa('Bio::Chado::Schema') ) {
-            $result_class = 'Cv::CvtermRelationship';
-        }
-        else {
-            $result_class = 'CvtermRelationship';
-        }
-
-        my $count = $schema->resultset($result_class)->count(
-            {   'object.name'  => $param->{object},
-                'subject.name' => $param->{subject}
-            },
-            { join => [ 'subject', 'object' ] }
-        );
-        $test_builder->ok( $count, $msg );
-        return $count;
-        }
-}
-
 1;
 
 =head1 NAME
@@ -616,8 +587,6 @@ There are three exported groups.  As usual, all methods could be exported by the
 
 =item has_relationship
 
-=item is_related
-
 =item is_obsolete_cvterm
 
 =item has_xref
@@ -635,8 +604,6 @@ There are three exported groups.  As usual, all methods could be exported by the
 =item count_subject_ok
 
 =item has_relationship
-
-=item is_related
 
 =item count_relationship_cvterm_ok
 
@@ -805,8 +772,6 @@ Tests if parent and child has a particular relationship
 
 =item B<parameters>
 
-B<cv>: Name of the cv, optional.
-
 B<object>: Name of the parent term.
 
 B<subject>: Name of the child term.
@@ -814,19 +779,6 @@ B<subject>: Name of the child term.
 B<relationship>: Name of the relationship term.
 
 =back
-
-
-=item is_related(L<DBIx::Class::Schema>, \%expected, [description])
-
-Tests if a parent has a particular child or vice versa.
-
-=over
-
-=item B<parameters>
-
-B<object>: Name of the parent term.
-
-B<subject>: Name of the child term.
 
 =item is_obsolete_cvterm(L<DBIx::Class::Schema>, \%expected, [description])
 
