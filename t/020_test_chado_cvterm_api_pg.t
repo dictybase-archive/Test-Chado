@@ -299,23 +299,6 @@ SKIP: {
             $desc
         );
 
-        $desc = 'should be related terms';
-        check_test(
-            sub {
-                is_related(
-                    $schema,
-                    {   'cv'      => 'eco',
-                        'object'  => 'similarity evidence',
-                        'subject' => 'phylogenetic evidence'
-                    },
-                    $desc
-                );
-            },
-            {   ok   => 1,
-                name => $desc
-            },
-            $desc
-        );
 
         drop_schema();
     };
