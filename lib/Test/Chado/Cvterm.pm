@@ -218,7 +218,7 @@ sub _count_alt_id {
         my $test_builder = $class->test_builder;
         $test_builder->croak('need a schema') if !$schema;
         $test_builder->croak('need options')  if !$param;
-        $class->_check_params_or_die( [qw/cv count db/], $param );
+        $class->_check_params_or_die( [qw/count db/], $param );
 
         my $result_class;
         if ( $schema->isa('Bio::Chado::Schema') ) {
@@ -227,15 +227,12 @@ sub _count_alt_id {
         else {
             $result_class = 'CvtermDbxref';
         }
-        my $count = $schema->resultset($result_class)->count(
-            {   'cv.name' => $param->{cv},
-                'db.name' => [ $param->{db}, $param->{cv} ]
-            },
-            { join => [ { 'cvterm' => 'cv' }, { 'dbxref' => 'db' } ] }
-        );
+        my $count
+            = $schema->resultset($result_class)
+            ->count( { 'db.name' => [ $param->{db}, $param->{cv} ] },
+            { join => [ { 'dbxref' => 'db' } ] } );
         return $test_builder->is_num( $count, $param->{count}, $msg );
     };
-
 }
 
 sub _count_subject {

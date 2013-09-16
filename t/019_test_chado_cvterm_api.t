@@ -69,7 +69,7 @@ subtest 'features of count api' => sub {
     check_test(
         sub {
             count_alt_id_ok( $schema,
-                { 'cv' => 'eco', 'count' => 7, db => 'ECO' }, $desc );
+                { 'count' => 7, db => 'ECO' }, $desc );
         },
         {   ok   => 1,
             name => $desc
