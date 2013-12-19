@@ -17,7 +17,7 @@ my %module_build_args = (
     "Siddhartha Basu <biosidd\@gmail.com>"
   ],
   "dist_name" => "Test-Chado",
-  "dist_version" => "v4.0.0",
+  "dist_version" => "v4.1.0",
   "license" => "perl",
   "module_name" => "Test::Chado",
   "recommends" => {},
