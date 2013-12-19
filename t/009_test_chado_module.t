@@ -27,6 +27,7 @@ subtest 'schema management with default loader' => sub {
     lives_ok { $schema = chado_schema() } 'should run chado_schema';
     isa_ok( $schema, 'DBIx::Class::Schema' );
 
+    $dbmanager = get_dbmanager_instance();
     my @row = $dbmanager->dbh->selectrow_array(
         "SELECT name FROM sqlite_master where
 	type = ? and tbl_name = ?", {}, qw/table feature/
@@ -40,6 +41,7 @@ subtest 'schema management with default loader' => sub {
     );
     isnt( @row2, 1,
         "should not have feature table after dropping the schema" );
+    lives_ok { drop_schema() } 'should run drop_schema';
 };
 
 subtest 'schema and fixture managements with default loader' => sub {
@@ -61,6 +63,7 @@ subtest 'schema and fixture managements with default loader' => sub {
     ok( @row, 'should have feature table after reloading' );
     is( $schema->resultset('Organism')->count( {} ),
         0, 'should not have any fixture after reload' );
+    lives_ok { drop_schema() } 'should run drop_schema';
 
 };
 
@@ -84,5 +87,8 @@ subtest 'loading custom schema with default loader' => sub {
         results     => 2,
         description => 'should have 2 db table rows'
     );
+
+    lives_ok { drop_schema() } 'should run drop_schema';
+
 };
 

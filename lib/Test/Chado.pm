@@ -127,14 +127,14 @@ sub _build_schema {
     return sub {
         my (%arg) = @_;
         my $fixture_loader
-            = $class->_fixture_loader_instance
-            ? $class->_fixture_loader_instance
-            : $class->_prepare_fixture_loader_instance;
+            #= $class->_fixture_loader_instance
+            #? $class->_fixture_loader_instance
+            = $class->_prepare_fixture_loader_instance;
 
-        if ( !$class->is_schema_loaded ) {
+            #if ( !$class->is_schema_loaded ) {
             $fixture_loader->dbmanager->deploy_schema;
-            $class->is_schema_loaded(1);
-        }
+            #$class->is_schema_loaded(1);
+            #}
         if ( defined $arg{'custom_fixture'} ) {
             die
                 "only **preset** fixture loader can be used with custom_fixture\n"
@@ -187,9 +187,9 @@ sub _prepare_fixture_loader_instance {
 sub _prepare_default_dbmanager {
     my ($class) = @_;
     return 
-            $class->_dbmanager_instance
-            ? $class->_dbmanager_instance
-            : Test::Chado::Factory::DBManager->get_instance('sqlite');
+            #$class->_dbmanager_instance
+            #? $class->_dbmanager_instance
+             Test::Chado::Factory::DBManager->get_instance('sqlite');
 
 }
 
