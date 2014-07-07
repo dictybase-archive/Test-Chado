@@ -6,6 +6,7 @@ local/
 Build
 MYMETA.json
 MYMETA.yml
+META.json
 _build/
 blib/
 !Build.PL
